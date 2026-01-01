@@ -1,0 +1,26 @@
+---
+import Layout from "../layouts/Layout.astro";
+import Navbar from "../components/layout/Navbar.astro";
+import Footer from "../components/layout/Footer.astro";
+import Header from "../components/sections/Header.astro";
+import Features from "../components/sections/Features.astro";
+import Gamemodes from "../components/sections/Gamemodes.astro";
+import About from "../components/sections/About.astro";
+import Rules from "../components/sections/Rules.astro";
+import Contact from "../components/sections/Contact.astro";
+
+import "../styles/global.css";
+---
+
+<Layout>
+  <Navbar />
+  <Header />
+  <Features />
+  <Gamemodes />
+  <About />
+  <Rules />
+  <Contact />
+  <Footer />
+</Layout>
+
+<script src="../scripts/main.ts"></script>

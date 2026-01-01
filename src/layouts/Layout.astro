@@ -1,0 +1,172 @@
+---
+import GlobalBackground from "../components/layout/GlobalBackground.astro";
+import { translations } from "../i18n/translations";
+import { SITE_CONFIG } from "../constants";
+
+interface Props {
+    title?: string;
+    description?: string;
+}
+
+const { 
+    title = SITE_CONFIG.title,
+    description = SITE_CONFIG.description
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang="es">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        
+        <!-- Favicon -->
+        <link rel="icon" type="image/webp" href="/favicon.webp" />
+        <link rel="apple-touch-icon" href="/favicon.webp" />
+
+        <!-- Primary Meta Tags -->
+        <title>{title}</title>
+        <meta name="title" content={title} />
+        <meta name="description" content={description} />
+        <meta name="keywords" content="minecraft, servidor, survival, quickland, español, eventos, economía, protección, comunidad, bedrock, java" />
+        <meta name="author" content="QuickLand Network" />
+        <meta name="robots" content="index, follow" />
+
+        <!-- Open Graph / Facebook -->
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content={SITE_CONFIG.url} />
+        <meta property="og:title" content={title} />
+        <meta property="og:description" content={description} />
+        <meta property="og:image" content={`${SITE_CONFIG.url}/og-image.webp`} />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta property="og:image:alt" content={title} />
+        <meta property="og:site_name" content={SITE_CONFIG.name} />
+        <meta property="og:locale" content="es_ES" />
+
+        <!-- Twitter -->
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:url" content={SITE_CONFIG.url} />
+        <meta name="twitter:title" content={title} />
+        <meta name="twitter:description" content={description} />
+        <meta name="twitter:image" content={`${SITE_CONFIG.url}/og-image.webp`} />
+        <meta name="twitter:image:alt" content={title} />
+
+        <!-- Additional Meta Tags -->
+        <meta name="theme-color" content={SITE_CONFIG.themeColor} />
+        <meta name="application-name" content={SITE_CONFIG.name} />
+
+        <!-- Canonical URL -->
+        <link rel="canonical" href={SITE_CONFIG.url} />
+
+        <!-- DNS Prefetch -->
+        <link rel="dns-prefetch" href="//discord.quickland.net" />
+        <link rel="dns-prefetch" href="//api.mcsrvstat.us" />
+
+        <!-- Generator -->
+        <meta name="generator" content={Astro.generator} />
+
+        <!-- Structured Data -->
+        <script type="application/ld+json" set:html={JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Organization",
+            "name": SITE_CONFIG.name,
+            "description": description,
+            "url": SITE_CONFIG.url,
+            "logo": `${SITE_CONFIG.url}/favicon.webp`,
+            "sameAs": ["https://discord.quickland.net"],
+            "contactPoint": {
+                "@type": "ContactPoint",
+                "contactType": "customer service",
+                "url": "https://discord.quickland.net"
+            }
+        })} />
+    </head>
+    <body class="font-sans antialiased text-white selection:bg-[#55ffff]/30 selection:text-[#55ffff]">
+        <GlobalBackground />
+        <div class="relative z-10">
+            <slot />
+        </div>
+
+        <!-- Global Toast Notification -->
+        <div
+            id="global-toast"
+            class="fixed bottom-10 left-1/2 -translate-x-1/2 bg-white text-black px-6 py-3 rounded-full shadow-2xl translate-y-24 opacity-0 transition-all duration-300 z-60 font-bold flex items-center gap-2 pointer-events-none"
+            role="status"
+            aria-live="polite"
+        >
+            <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-5 w-5 text-green-500"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+                aria-hidden="true"
+            >
+                <path
+                    fill-rule="evenodd"
+                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                    clip-rule="evenodd"
+                />
+            </svg>
+            <span id="global-toast-message">Notificación</span>
+        </div>
+
+        <script>
+            import { translations } from "../i18n/translations";
+
+            type TranslationKey = string;
+            type Lang = "es" | "en" | "pt";
+
+            // Translation functions
+            function t(key: TranslationKey, lang: Lang = "es"): string {
+                return translations[lang]?.[key] || translations["es"][key] || key;
+            }
+
+            function applyTranslations(lang: Lang): void {
+                document.querySelectorAll<HTMLElement>("[data-i18n]").forEach((el) => {
+                    const key = el.getAttribute("data-i18n");
+                    if (key) {
+                        el.textContent = t(key, lang);
+                    }
+                });
+                document.documentElement.lang = lang === "pt" ? "pt-BR" : lang;
+            }
+
+            // Toast notification
+            function showToast(message: string): void {
+                const toast = document.getElementById("global-toast");
+                const toastMsg = document.getElementById("global-toast-message");
+
+                if (toast && toastMsg) {
+                    toastMsg.textContent = message;
+                    toast.classList.remove("translate-y-24", "opacity-0");
+
+                    if (window.toastTimeout) clearTimeout(window.toastTimeout);
+
+                    window.toastTimeout = setTimeout(() => {
+                        toast.classList.add("translate-y-24", "opacity-0");
+                    }, 3000) as unknown as number;
+                }
+            }
+
+            // Initialize
+            document.addEventListener("DOMContentLoaded", () => {
+                const savedLang = (localStorage.getItem("quickland-lang") || "es") as Lang;
+                applyTranslations(savedLang);
+
+                // Export to window
+                window.quicklandTranslations = { translations, t, applyTranslations };
+                window.showToast = showToast;
+            });
+
+            // Listen for language changes
+            window.addEventListener("languageChange", ((e: CustomEvent<{ lang: Lang }>) => {
+                const lang = e.detail?.lang || "es";
+                applyTranslations(lang);
+            }) as EventListener);
+        </script>
+    </body>
+</html>
+        </script>
+    </body>
+</html>
