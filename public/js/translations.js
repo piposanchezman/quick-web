@@ -19,6 +19,9 @@ const translations = {
         'header.offline': 'Servidor Offline',
         'header.players': 'jugadores',
         'header.copied': '¡Copiado!',
+        'header.javaEdition': 'Java Edition',
+        'header.bedrockEdition': 'Bedrock Edition',
+        'header.port': 'Puerto',
 
         // Features
         'features.title': '¿Por qué elegir QuickLand?',
@@ -58,9 +61,22 @@ const translations = {
 
         // Rules
         'rules.title': 'Reglas del Servidor',
+        'rules.intro': 'Para mantener una comunidad sana y divertida, es importante respetar las siguientes normas.',
         'rules.prohibited': 'Prohibido',
         'rules.allowed': 'Permitido',
-        'rules.fullRules': 'Reglamento completo',
+        'rules.item1': 'Uso de hacks, mods o clientes con ventajas injustas',
+        'rules.item2': 'Abuso de bugs o glitches para beneficio propio',
+        'rules.item3': 'Estafas, suplantación de identidad o robo de cuentas',
+        'rules.item4': 'Griefing masivo fuera de las zonas permitidas',
+        'rules.item5': 'Conducta tóxica, insultos graves o amenazas',
+        'rules.item6': 'Spam, flood o publicidad de otros servidores',
+        'rules.item7': 'PvP justo, competitivo y consensuado',
+        'rules.item8': 'Comercio seguro y honesto entre jugadores',
+        'rules.item9': 'Construcciones creativas (granjas optimizadas permitidas)',
+        'rules.item10': 'Uso de clientes legítimos (Lunar, Badlion, etc.)',
+        'rules.item11': 'Reportar bugs o jugadores tramposos al Staff',
+        'rules.item12': 'Trabajo en equipo y sana convivencia',
+        'rules.fullRules': 'Leer Reglamento Completo',
 
         // Contact
         'contact.title': 'Contáctanos',
@@ -77,6 +93,12 @@ const translations = {
         'footer.tagline': 'El mejor servidor de Minecraft en español. Únete a nuestra comunidad y vive aventuras épicas.',
         'footer.quickLinks': 'Enlaces Rápidos',
         'footer.info': 'Información',
+        'footer.discord': 'Discord',
+        'footer.shop': 'Tienda',
+        'footer.support': 'Soporte',
+        'footer.ipJava': 'IP Java',
+        'footer.ipBedrock': 'IP Bedrock',
+        'footer.serverVersions': '1.8 - 1.21+',
         'footer.copyright': '© 2020-2025 QuickLand Network. Todos los derechos reservados.',
         'footer.disclaimer': 'Minecraft es una marca registrada de Mojang Studios. Este servidor no está afiliado con Mojang Studios.',
         'footer.madeWith': 'Desarrollado con ❤️ para la comunidad de Minecraft'
@@ -98,6 +120,9 @@ const translations = {
         'header.offline': 'Server Offline',
         'header.players': 'players',
         'header.copied': 'Copied!',
+        'header.javaEdition': 'Java Edition',
+        'header.bedrockEdition': 'Bedrock Edition',
+        'header.port': 'Port',
 
         // Features
         'features.title': 'Why Choose QuickLand?',
@@ -137,9 +162,22 @@ const translations = {
 
         // Rules
         'rules.title': 'Server Rules',
+        'rules.intro': 'To maintain a healthy and fun community, it is important to respect the following rules.',
         'rules.prohibited': 'Prohibited',
         'rules.allowed': 'Allowed',
-        'rules.fullRules': 'Full rulebook',
+        'rules.item1': 'Use of hacks, mods or clients with unfair advantages',
+        'rules.item2': 'Abuse of bugs or glitches for personal gain',
+        'rules.item3': 'Scams, identity theft or account theft',
+        'rules.item4': 'Massive griefing outside permitted areas',
+        'rules.item5': 'Toxic behavior, serious insults or threats',
+        'rules.item6': 'Spam, flood or advertising of other servers',
+        'rules.item7': 'Fair, competitive and consensual PvP',
+        'rules.item8': 'Safe and honest trading between players',
+        'rules.item9': 'Creative builds (optimized farms allowed)',
+        'rules.item10': 'Use of legitimate clients (Lunar, Badlion, etc.)',
+        'rules.item11': 'Report bugs or cheating players to Staff',
+        'rules.item12': 'Teamwork and healthy coexistence',
+        'rules.fullRules': 'Read Full Rulebook',
 
         // Contact
         'contact.title': 'Contact Us',
@@ -156,6 +194,12 @@ const translations = {
         'footer.tagline': 'The best Spanish-speaking Minecraft server. Join our community and live epic adventures.',
         'footer.quickLinks': 'Quick Links',
         'footer.info': 'Information',
+        'footer.discord': 'Discord',
+        'footer.shop': 'Shop',
+        'footer.support': 'Support',
+        'footer.ipJava': 'Java IP',
+        'footer.ipBedrock': 'Bedrock IP',
+        'footer.serverVersions': '1.8 - 1.21+',
         'footer.copyright': '© 2020-2025 QuickLand Network. All rights reserved.',
         'footer.disclaimer': 'Minecraft is a trademark of Mojang Studios. This server is not affiliated with Mojang Studios.',
         'footer.madeWith': 'Made with ❤️ for the Minecraft community'
@@ -177,6 +221,9 @@ const translations = {
         'header.offline': 'Servidor Offline',
         'header.players': 'jogadores',
         'header.copied': 'Copiado!',
+        'header.javaEdition': 'Edição Java',
+        'header.bedrockEdition': 'Edição Bedrock',
+        'header.port': 'Porta',
 
         // Features
         'features.title': 'Por que escolher QuickLand?',
@@ -216,9 +263,22 @@ const translations = {
 
         // Rules
         'rules.title': 'Regras do Servidor',
+        'rules.intro': 'Para manter uma comunidade saudável e divertida, é importante respeitar as seguintes regras.',
         'rules.prohibited': 'Proibido',
         'rules.allowed': 'Permitido',
-        'rules.fullRules': 'Regulamento completo',
+        'rules.item1': 'Uso de hacks, mods ou clientes com vantagens injustas',
+        'rules.item2': 'Abuso de bugs ou glitches para benefício próprio',
+        'rules.item3': 'Fraudes, roubo de identidade ou roubo de contas',
+        'rules.item4': 'Griefing massivo fora das áreas permitidas',
+        'rules.item5': 'Comportamento tóxico, insultos graves ou ameaças',
+        'rules.item6': 'Spam, flood ou publicidade de outros servidores',
+        'rules.item7': 'PvP justo, competitivo e consensual',
+        'rules.item8': 'Comércio seguro e honesto entre jogadores',
+        'rules.item9': 'Construções criativas (fazendas otimizadas permitidas)',
+        'rules.item10': 'Uso de clientes legítimos (Lunar, Badlion, etc.)',
+        'rules.item11': 'Reportar bugs ou jogadores trapaceiros ao Staff',
+        'rules.item12': 'Trabalho em equipe e convivência saudável',
+        'rules.fullRules': 'Ler Regulamento Completo',
 
         // Contact
         'contact.title': 'Contate-nos',
@@ -235,6 +295,12 @@ const translations = {
         'footer.tagline': 'O melhor servidor de Minecraft em espanhol. Junte-se à nossa comunidade e viva aventuras épicas.',
         'footer.quickLinks': 'Links Rápidos',
         'footer.info': 'Informação',
+        'footer.discord': 'Discord',
+        'footer.shop': 'Loja',
+        'footer.support': 'Suporte',
+        'footer.ipJava': 'IP Java',
+        'footer.ipBedrock': 'IP Bedrock',
+        'footer.serverVersions': '1.8 - 1.21+',
         'footer.copyright': '© 2020-2025 QuickLand Network. Todos os direitos reservados.',
         'footer.disclaimer': 'Minecraft é uma marca registrada da Mojang Studios. Este servidor não é afiliado à Mojang Studios.',
         'footer.madeWith': 'Desenvolvido com ❤️ para a comunidade de Minecraft'
