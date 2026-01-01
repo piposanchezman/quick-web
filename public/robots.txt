@@ -1,0 +1,15 @@
+# QuickLand Network - robots.txt
+# https://quickland.net
+
+# Permitir todos los bots
+User-agent: *
+Allow: /
+
+# Sitemap location
+Sitemap: https://quickland.net/sitemap.xml
+
+# Bloquear archivos internos
+Disallow: /_astro/
+
+# Crawl rate (ser amable con el servidor)
+Crawl-delay: 1
