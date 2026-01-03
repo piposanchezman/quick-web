@@ -1,11 +1,15 @@
 ---
-// Language Selector Component
-const currentLang = "es"; // Default language
+import type { Locale } from "../../i18n/utils";
+
+const currentLocale = (Astro.currentLocale || 'es') as Locale;
+
 const languages = [
-    { code: "es", name: "ES", flag: "https://flagcdn.com/w40/es.png" },
-    { code: "en", name: "EN", flag: "https://flagcdn.com/w40/us.png" },
-    { code: "pt", name: "PT", flag: "https://flagcdn.com/w40/br.png" },
+    { code: "es" as Locale, name: "ES", flag: "https://flagcdn.com/w40/es.png", path: "/" },
+    { code: "en" as Locale, name: "EN", flag: "https://flagcdn.com/w40/us.png", path: "/en/" },
+    { code: "pt" as Locale, name: "PT", flag: "https://flagcdn.com/w40/br.png", path: "/pt/" },
 ];
+
+const currentLang = languages.find(lang => lang.code === currentLocale) || languages[0];
 ---
 
 <div class="relative" id="lang-selector-container">
@@ -16,8 +20,8 @@ const languages = [
     >
         <img
             id="current-flag"
-            src="https://flagcdn.com/w40/es.png"
-            alt="Bandera"
+            src={currentLang.flag}
+            alt={currentLang.name}
             class="w-5 h-auto rounded-sm object-cover"
         />
         <svg
@@ -42,11 +46,9 @@ const languages = [
     >
         {
             languages.map((lang) => (
-                <button
-                    class="lang-option w-full flex items-center space-x-3 px-4 py-3 hover:bg-[#222222] transition-colors"
-                    data-lang={lang.code}
-                    data-flag={lang.flag}
-                    data-name={lang.name}
+                <a
+                    href={lang.path}
+                    class="lang-option w-full flex items-center space-x-3 px-4 py-3 hover:bg-[#222222] transition-colors {lang.code === currentLocale ? 'bg-[#222222]' : ''}"
                 >
                     <img
                         src={lang.flag}
@@ -56,7 +58,7 @@ const languages = [
                     <span class="text-white text-sm font-medium">
                         {lang.name}
                     </span>
-                </button>
+                </a>
             ))
         }
     </div>
@@ -66,19 +68,6 @@ const languages = [
     document.addEventListener("DOMContentLoaded", () => {
         const btn = document.getElementById("lang-selector-btn");
         const dropdown = document.getElementById("lang-dropdown");
-        const currentFlag = document.getElementById("current-flag"); // HTMLImageElement
-        const langOptions = document.querySelectorAll(".lang-option");
-
-        // Load saved language
-        const savedLang = localStorage.getItem("quickland-lang") || "es";
-        const savedOption = document.querySelector(
-            `[data-lang="${savedLang}"]`,
-        );
-        if (savedOption && currentFlag instanceof HTMLImageElement) {
-            currentFlag.src =
-                savedOption.getAttribute("data-flag") ||
-                "https://flagcdn.com/w40/es.png";
-        }
 
         // Toggle dropdown
         btn?.addEventListener("click", (e) => {
@@ -89,33 +78,6 @@ const languages = [
         // Close dropdown when clicking outside
         document.addEventListener("click", () => {
             dropdown?.classList.add("hidden");
-        });
-
-        // Handle language selection
-        langOptions.forEach((option) => {
-            option.addEventListener("click", () => {
-                const lang = option.getAttribute("data-lang");
-                const flagSrc = option.getAttribute("data-flag");
-                const name = option.getAttribute("data-name");
-
-                if (currentFlag instanceof HTMLImageElement) {
-                    currentFlag.src =
-                        flagSrc || "https://flagcdn.com/w40/es.png";
-                }
-
-                // Save preference
-                localStorage.setItem("quickland-lang", lang || "es");
-
-                // Close dropdown
-                dropdown?.classList.add("hidden");
-
-                // Dispatch custom event for language change
-                window.dispatchEvent(
-                    new CustomEvent("languageChange", { detail: { lang } }),
-                );
-
-                console.log(`Idioma cambiado a: ${name}`);
-            });
         });
     });
 </script>
