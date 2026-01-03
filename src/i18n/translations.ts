@@ -12,8 +12,8 @@ export const translations = {
     "header.title": "¡Únete a Quickland!",
     "header.subtitle":
       "Vive una aventura survival inolvidable. Eventos, economía, protección y una comunidad activa te esperan.",
-    "header.online": "Servidor Online",
-    "header.offline": "Servidor Offline",
+    "header.online": "Servidor Conectado",
+    "header.offline": "Servidor Desconectado",
     "header.players": "jugadores",
     "header.copied": "¡Copiado!",
     "header.javaEdition": "Java Edition",
@@ -129,8 +129,8 @@ export const translations = {
     "header.title": "Join Quickland!",
     "header.subtitle":
       "Experience an unforgettable survival adventure. Events, economy, protection and an active community await you.",
-    "header.online": "Server Online",
-    "header.offline": "Server Offline",
+    "header.online": "Online Server",
+    "header.offline": "Offline Server",
     "header.players": "players",
     "header.copied": "Copied!",
     "header.javaEdition": "Java Edition",
@@ -213,7 +213,7 @@ export const translations = {
       "For formal inquiries, important reports or business collaborations",
     "contact.responseTime": "Response Time",
     "contact.discordTime": "Immediate response during active hours",
-    "contact.emailTime": "24-48 horas maximum",
+    "contact.emailTime": "24-48 hours maximum",
     // Footer
     "footer.tagline":
       "The best Spanish-speaking Minecraft server. Join our community and live epic adventures.",

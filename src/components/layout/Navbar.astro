@@ -2,6 +2,12 @@
 import LanguageSelector from "../ui/LanguageSelector.astro";
 import ExternalLink from "../ui/ExternalLink.astro";
 import { NAV_ITEMS, SOCIAL_LINKS } from "../../constants";
+
+interface Props {
+    translations: any;
+}
+
+const { translations: t } = Astro.props;
 ---
 
 <nav
@@ -27,13 +33,12 @@ import { NAV_ITEMS, SOCIAL_LINKS } from "../../constants";
 
         <!-- Desktop Menu -->
         <div class="hidden md:flex items-center space-x-6">
-            {NAV_ITEMS.map(({ href, labelKey, label }) => (
+            {NAV_ITEMS.map(({ href, labelKey }) => (
                 <a
                     href={href}
                     class="nav-link text-gray-300 hover:text-[#55ffff] transition-colors duration-300 font-medium"
-                    data-i18n={labelKey}
                 >
-                    {label}
+                    {t[labelKey]}
                 </a>
             ))}
             <ExternalLink
@@ -41,7 +46,7 @@ import { NAV_ITEMS, SOCIAL_LINKS } from "../../constants";
                 class="px-4 py-2 bg-[#7289DA] text-white rounded-full font-semibold hover:bg-[#5865F2] hover:scale-105 transition-all duration-300"
                 ariaLabel="Únete a nuestro servidor de Discord"
             >
-                <span data-i18n="nav.joinDiscord">Unirse a Discord</span>
+                {t['nav.joinDiscord']}
             </ExternalLink>
             <LanguageSelector />
         </div>
@@ -96,14 +101,13 @@ import { NAV_ITEMS, SOCIAL_LINKS } from "../../constants";
         role="menu"
     >
         <nav class="px-4 py-4 space-y-3">
-            {NAV_ITEMS.map(({ href, labelKey, label }) => (
+            {NAV_ITEMS.map(({ href, labelKey }) => (
                 <a
                     href={href}
                     class="mobile-nav-link block text-gray-300 hover:text-[#55ffff] transition-colors py-2 font-medium"
-                    data-i18n={labelKey}
                     role="menuitem"
                 >
-                    {label}
+                    {t[labelKey]}
                 </a>
             ))}
             <ExternalLink
@@ -111,7 +115,7 @@ import { NAV_ITEMS, SOCIAL_LINKS } from "../../constants";
                 class="block text-center px-4 py-3 bg-[#7289DA] text-white rounded-lg font-semibold hover:bg-[#5865F2] transition-colors mt-4"
                 ariaLabel="Unirse al servidor de Discord"
             >
-                <span data-i18n="nav.joinDiscord">Unirse a Discord</span>
+                {t['nav.joinDiscord']}
             </ExternalLink>
         </nav>
     </div>
