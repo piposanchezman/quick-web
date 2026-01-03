@@ -1,18 +1,23 @@
+---
+interface Props {
+  translations: any;
+}
+
+const { translations: t } = Astro.props;
+---
+
 <section id="contacto" class="py-24 px-4 relative z-10">
   <div class="max-w-4xl mx-auto text-center">
     <div class="animate-fade-in-up">
       <h2
         class="text-4xl md:text-5xl font-bold text-white mb-6"
-        data-i18n="contact.title"
       >
-        Contáctanos
+        {t['contact.title']}
       </h2>
       <p
         class="text-gray-400 text-lg mb-16 max-w-2xl mx-auto"
-        data-i18n="contact.subtitle"
       >
-        ¿Tienes preguntas, sugerencias o necesitas ayuda? Estamos aquí para ti.
-        Elige el medio de contacto que prefieras.
+        {t['contact.subtitle']}
       </p>
     </div>
 
@@ -43,16 +48,13 @@
           </div>
           <h3
             class="text-2xl font-bold text-white mb-3"
-            data-i18n="contact.discordTitle"
           >
-            Discord Oficial
+            {t['contact.discordTitle']}
           </h3>
           <p
             class="text-gray-300 mb-8 text-sm leading-relaxed"
-            data-i18n="contact.discordDesc"
           >
-            Únete a nuestra comunidad oficial en Discord para soporte inmediato,
-            reportes, sugerencias y chat con otros jugadores.
+            {t['contact.discordDesc']}
           </p>
           <a
             href="https://discord.quickland.net"
@@ -60,7 +62,7 @@
             rel="noopener noreferrer"
             class="inline-flex items-center px-8 py-3 bg-[#5865F2] text-white rounded-xl hover:bg-[#4752c4] transition-all duration-300 shadow-lg shadow-[#5865F2]/30 hover:shadow-[#5865F2]/50 font-bold"
           >
-            <span data-i18n="nav.joinDiscord">Unirse al Discord</span>
+            <span>{t['nav.joinDiscord']}</span>
             <svg
               xmlns="http://www.w3.org/2000/svg"
               class="h-5 w-5 ml-2"
@@ -109,16 +111,13 @@
           </div>
           <h3
             class="text-2xl font-bold text-white mb-3"
-            data-i18n="contact.emailTitle"
           >
-            Correo Electrónico
+            {t['contact.emailTitle']}
           </h3>
           <p
             class="text-gray-300 mb-8 text-sm leading-relaxed"
-            data-i18n="contact.emailDesc"
           >
-            Para consultas formales, solicitudes de apelación, reportes graves o
-            colaboraciones comerciales.
+            {t['contact.emailDesc']}
           </p>
           <a
             href="mailto:quickland36@gmail.com"
@@ -150,9 +149,8 @@
     >
       <h3
         class="text-lg font-semibold text-gray-200 mb-6 uppercase tracking-wider"
-        data-i18n="contact.responseTime"
       >
-        Tiempos de Respuesta Estimados
+        {t['contact.responseTime']}
       </h3>
       <div class="grid md:grid-cols-2 gap-6 text-gray-300">
         <div
@@ -161,8 +159,8 @@
           <div class="w-3 h-3 bg-[#5865F2] rounded-full animate-pulse"></div>
           <div class="text-left">
             <div class="text-[#5865F2] font-bold text-sm">Discord</div>
-            <div class="text-xs text-gray-400" data-i18n="contact.discordTime">
-              Inmediato (Horario Activo)
+            <div class="text-xs text-gray-400">
+              {t['contact.discordTime']}
             </div>
           </div>
         </div>
@@ -172,8 +170,8 @@
           <div class="w-3 h-3 bg-[#55ffff] rounded-full"></div>
           <div class="text-left">
             <div class="text-[#55ffff] font-bold text-sm">Email</div>
-            <div class="text-xs text-gray-400" data-i18n="contact.emailTime">
-              24-48 horas máx.
+            <div class="text-xs text-gray-400">
+              {t['contact.emailTime']}
             </div>
           </div>
         </div>

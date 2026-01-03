@@ -1,5 +1,9 @@
 ---
-// Interactive Background is removed in favor of GlobalBackground for consistency
+interface Props {
+    translations: any;
+}
+
+const { translations: t } = Astro.props;
 ---
 
 <section
@@ -31,15 +35,13 @@
     <div class="space-y-4">
       <h1
         class="text-6xl sm:text-7xl md:text-8xl font-black bg-gradient-to-br from-[#55ffff] via-white to-[#33cccc] bg-clip-text text-transparent drop-shadow-[0_0_15px_rgba(85,255,255,0.5)] animate-fade-in-up"
-        data-i18n="header.title"
       >
-        ¡Únete a Quickland!
+        {t['header.title']}
       </h1>
       <p
         class="text-xl sm:text-2xl text-gray-300 max-w-2xl mx-auto font-light leading-relaxed animate-fade-in-up delay-100"
-        data-i18n="header.subtitle"
       >
-        Tu servidor de Minecraft favorito. Eventos, economía y protección de terrenos.
+        {t['header.subtitle']}
       </p>
     </div>
 
@@ -64,14 +66,15 @@
         <span
           id="status-text"
           class="text-white font-bold tracking-wide text-sm leading-none"
-          data-i18n="header.online">Servidor Online</span
+          data-offline-text={t['header.offline']}
+          >{t['header.online']}</span
         >
         <span
           id="player-count-wrapper"
           class="text-xs text-[#55ffff] font-medium mt-1"
         >
           <span id="player-count">0</span>
-          <span data-i18n="header.players">jugadores</span>
+          <span>{t['header.players']}</span>
         </span>
       </div>
     </div>
@@ -84,13 +87,13 @@
       <button
         id="copy-java"
         class="group relative overflow-hidden px-8 py-4 bg-[#55ffff]/10 backdrop-blur-md rounded-xl border border-[#55ffff]/30 hover:bg-[#55ffff]/20 hover:border-[#55ffff] transition-all duration-300 text-left"
+        data-copied-text={t['header.copied']}
       >
         <div class="flex items-center justify-between">
           <div class="flex flex-col">
             <span
               class="text-xs text-[#55ffff] font-bold uppercase tracking-wider"
-              data-i18n="header.javaEdition"
-              >Java Edition</span
+              >{t['header.javaEdition']}</span
             >
             <span
               class="text-lg text-white font-bold group-hover:text-[#55ffff] transition-colors"
@@ -124,20 +127,20 @@
       <button
         id="copy-bedrock"
         class="group relative overflow-hidden px-8 py-4 bg-[#33cccc]/10 backdrop-blur-md rounded-xl border border-[#33cccc]/30 hover:bg-[#33cccc]/20 hover:border-[#33cccc] transition-all duration-300 text-left"
+        data-copied-text={t['header.copied']}
       >
         <div class="flex items-center justify-between">
           <div class="flex flex-col">
             <span
               class="text-xs text-[#33cccc] font-bold uppercase tracking-wider"
-              data-i18n="header.bedrockEdition"
-              >Bedrock Edition</span
+              >{t['header.bedrockEdition']}</span
             >
             <span
               class="text-lg text-white font-bold group-hover:text-[#33cccc] transition-colors"
               >quickland.net</span
             >
             <span class="text-[10px] text-gray-400 font-mono tracking-wide"
-              ><span data-i18n="header.port">Puerto</span>: 19132</span
+              >{t['header.port']}: 19132</span
             >
           </div>
           <!-- Icon -->
@@ -228,6 +231,10 @@
 </style>
 
 <script>
+  // Store translations on page load
+  let onlineText = "Servidor Online";
+  let offlineText = "Servidor Offline";
+
   // Server Status Logic
   async function updateServerStatus() {
     const indicator = document.getElementById("status-indicator");
@@ -245,9 +252,6 @@
 
         indicatorPing?.classList.remove("hidden");
 
-        // Using translation system if available, else fallback
-        const onlineText =
-          window.quicklandTranslations?.t("header.online") || "Servidor Online";
         if (text) text.textContent = onlineText;
 
         if (count) count.textContent = data.players?.online?.toString() || "0";
@@ -256,9 +260,6 @@
         indicator?.classList.add("bg-red-500");
         indicatorPing?.classList.add("hidden");
 
-        const offlineText =
-          window.quicklandTranslations?.t("header.offline") ||
-          "Servidor Offline";
         if (text) text.textContent = offlineText;
       }
     } catch (e) {
@@ -272,8 +273,7 @@
 
     btn?.addEventListener("click", () => {
       navigator.clipboard.writeText(textToCopy).then(() => {
-        const copiedText =
-          window.quicklandTranslations?.t("header.copied") || "¡Copiado!";
+        const copiedText = btn.dataset.copiedText || "¡Copiado!";
 
         if (window.showToast) {
           window.showToast(copiedText);
@@ -283,6 +283,13 @@
   }
 
   document.addEventListener("DOMContentLoaded", () => {
+    // Initialize translation texts from server-rendered content
+    const statusText = document.getElementById("status-text");
+    if (statusText) {
+      onlineText = statusText.textContent || "Servidor Online";
+      offlineText = statusText.dataset.offlineText || "Servidor Offline";
+    }
+
     updateServerStatus();
     setInterval(updateServerStatus, 60000);
 

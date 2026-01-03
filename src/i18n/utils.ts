@@ -1,19 +1,17 @@
-import { translations } from "./translations";
+import { translations } from './translations';
 
-export type Lang = keyof typeof translations;
-export type TranslationKey = keyof typeof translations.es;
+export type Locale = 'es' | 'en' | 'pt';
 
-export function t(key: string, lang: Lang = "es"): string {
-    // @ts-ignore
-    return translations[lang]?.[key] || translations["es"][key] || key;
-}
-
-export function getCurrentLang(): Lang {
-    if (typeof window !== "undefined") {
-        const savedLang = localStorage.getItem("quickland-lang");
-        if (savedLang && ['es', 'en', 'pt'].includes(savedLang)) {
-            return savedLang as Lang;
-        }
-    }
-    return "es";
+/**
+ * Get all translations for a specific locale
+ * @param locale - The locale to get translations for
+ * @returns Translation object with keys in format 'section.key'
+ */
+export function getTranslations(locale: Locale) {
+  const trans = translations[locale];
+  if (!trans) {
+    console.error(`Translations not found for locale: ${locale}`);
+    return translations['es']; // Fallback to Spanish
+  }
+  return trans;
 }

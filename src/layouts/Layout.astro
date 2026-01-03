@@ -1,21 +1,27 @@
 ---
 import GlobalBackground from "../components/layout/GlobalBackground.astro";
-import { translations } from "../i18n/translations";
 import { SITE_CONFIG } from "../constants";
+import type { Locale } from "../i18n/utils";
 
 interface Props {
     title?: string;
     description?: string;
+    locale: Locale;
+    translations: any;
 }
 
 const { 
     title = SITE_CONFIG.title,
-    description = SITE_CONFIG.description
+    description = SITE_CONFIG.description,
+    locale,
+    translations
 } = Astro.props;
+
+const htmlLang = locale === 'pt' ? 'pt-BR' : locale;
 ---
 
 <!doctype html>
-<html lang="es">
+<html lang={htmlLang}>
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -112,26 +118,6 @@ const {
         </div>
 
         <script>
-            import { translations } from "../i18n/translations";
-
-            type TranslationKey = string;
-            type Lang = "es" | "en" | "pt";
-
-            // Translation functions
-            function t(key: TranslationKey, lang: Lang = "es"): string {
-                return translations[lang]?.[key] || translations["es"][key] || key;
-            }
-
-            function applyTranslations(lang: Lang): void {
-                document.querySelectorAll<HTMLElement>("[data-i18n]").forEach((el) => {
-                    const key = el.getAttribute("data-i18n");
-                    if (key) {
-                        el.textContent = t(key, lang);
-                    }
-                });
-                document.documentElement.lang = lang === "pt" ? "pt-BR" : lang;
-            }
-
             // Toast notification
             function showToast(message: string): void {
                 const toast = document.getElementById("global-toast");
@@ -151,19 +137,9 @@ const {
 
             // Initialize
             document.addEventListener("DOMContentLoaded", () => {
-                const savedLang = (localStorage.getItem("quickland-lang") || "es") as Lang;
-                applyTranslations(savedLang);
-
                 // Export to window
-                window.quicklandTranslations = { translations, t, applyTranslations };
                 window.showToast = showToast;
             });
-
-            // Listen for language changes
-            window.addEventListener("languageChange", ((e: CustomEvent<{ lang: Lang }>) => {
-                const lang = e.detail?.lang || "es";
-                applyTranslations(lang);
-            }) as EventListener);
         </script>
     </body>
 </html>
