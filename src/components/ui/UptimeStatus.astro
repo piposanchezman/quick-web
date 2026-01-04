@@ -169,15 +169,6 @@ const { apiKey, monitorId } = Astro.props;
       const currentHourStart = new Date(nowDate.getFullYear(), nowDate.getMonth(), nowDate.getDate(), nowDate.getHours(), 0, 0);
       const hoursBack = (currentHour - targetHour + 24) % 24;
       startTime = currentHourStart.getTime() / 1000 - (hoursBack * 60 * 60);
-      
-      console.log('[UptimeStatus] Detail view calculation:', {
-        selectedHourIndex: detailView.hour,
-        targetHour: targetHour,
-        currentHour: currentHour,
-        hoursBack: hoursBack,
-        startTime: new Date(startTime * 1000).toString(),
-        endTime: new Date((startTime + 60 * 60) * 1000).toString(),
-      });
     } else if (days === 1) {
       // For 24 hours, show hourly bars aligned to hour boundaries
       numBars = 24;
@@ -186,13 +177,6 @@ const { apiKey, monitorId } = Astro.props;
       const nowDate = new Date();
       const currentHourStart = new Date(nowDate.getFullYear(), nowDate.getMonth(), nowDate.getDate(), nowDate.getHours(), 0, 0);
       startTime = currentHourStart.getTime() / 1000 - (23 * 60 * 60); // 23 hours before current hour
-      
-      console.log('[UptimeStatus] Timezone calculation:', {
-        localTime: nowDate.toString(),
-        currentHourStart: currentHourStart.toString(),
-        startTime: new Date(startTime * 1000).toString(),
-        timezoneOffset: nowDate.getTimezoneOffset(),
-      });
     } else if (days >= 365) {
       // For 1 year, show 12 monthly bars
       numBars = 12;
@@ -209,18 +193,6 @@ const { apiKey, monitorId } = Astro.props;
     // For detail view, we need to include logs from before startTime to detect carry-over downtimes
     const lookbackTime = detailView ? startTime - (24 * 60 * 60) : startTime; // Look back 24 hours for detail view
     const recentLogs = logs.filter((log) => log.datetime >= lookbackTime);
-    
-    console.log('[UptimeStatus] Filtered logs:', {
-      total: logs.length,
-      recent: recentLogs.length,
-      lookbackTime: new Date(lookbackTime * 1000).toString(),
-      startTime: new Date(startTime * 1000).toString(),
-      logs: recentLogs.map(log => ({
-        type: log.type === 1 ? 'DOWN' : log.type === 2 ? 'UP' : 'OTHER',
-        time: new Date(log.datetime * 1000).toLocaleString(),
-        timestamp: log.datetime
-      }))
-    });
 
     const dailyStatus: number[] = [];
 
@@ -232,25 +204,6 @@ const { apiKey, monitorId } = Astro.props;
       const barLogs = recentLogs.filter(
         (log) => log.datetime >= barStart && log.datetime < barEnd
       ).sort((a, b) => a.datetime - b.datetime);
-      
-      // Debug: Log bar time range and events
-      if (detailView && barLogs.length > 0) {
-        console.log(`[UptimeStatus] Detail bar ${i} (${new Date(barStart * 1000).toLocaleTimeString()} - ${new Date(barEnd * 1000).toLocaleTimeString()}):`, {
-          events: barLogs.map(log => ({
-            type: log.type === 1 ? 'DOWN' : log.type === 2 ? 'UP' : 'OTHER',
-            time: new Date(log.datetime * 1000).toLocaleTimeString(),
-            timestamp: log.datetime
-          }))
-        });
-      } else if (days === 1 && barLogs.length > 0) {
-        console.log(`[UptimeStatus] Bar ${i} (${new Date(barStart * 1000).toLocaleString()} - ${new Date(barEnd * 1000).toLocaleString()}):`, {
-          events: barLogs.map(log => ({
-            type: log.type === 1 ? 'DOWN' : log.type === 2 ? 'UP' : 'OTHER',
-            time: new Date(log.datetime * 1000).toLocaleString(),
-            timestamp: log.datetime
-          }))
-        });
-      }
 
       // Calculate uptime based on time duration, not just log count
       let uptimeSeconds = barDuration; // Start assuming full uptime
@@ -285,27 +238,12 @@ const { apiKey, monitorId } = Astro.props;
             // UP event is in this bar
             const downtimeInBar = laterUp.datetime - barStart;
             uptimeSeconds -= downtimeInBar;
-            if (detailView) {
-              console.log(`[UptimeStatus] Detail bar ${i}: Carry-over downtime: ${downtimeInBar}s (DOWN at ${new Date(lastDownBeforeBar.datetime * 1000).toLocaleTimeString()}, UP at ${new Date(laterUp.datetime * 1000).toLocaleTimeString()})`);
-            } else {
-              console.log(`[UptimeStatus] Bar ${i}: Carry-over downtime from previous bar: ${downtimeInBar}s (DOWN at ${new Date(lastDownBeforeBar.datetime * 1000).toLocaleString()}, UP at ${new Date(laterUp.datetime * 1000).toLocaleString()})`);
-            }
           } else if (laterUp) {
             // UP event is after this bar, entire bar is down
             uptimeSeconds = 0;
-            if (detailView) {
-              console.log(`[UptimeStatus] Detail bar ${i}: Entire interval is down (carry-over, UP at ${new Date(laterUp.datetime * 1000).toLocaleTimeString()})`);
-            } else {
-              console.log(`[UptimeStatus] Bar ${i}: Entire bar is down (carry-over, UP at ${new Date(laterUp.datetime * 1000).toLocaleString()})`);
-            }
           } else {
             // No UP event found, still down
             uptimeSeconds = 0;
-            if (detailView) {
-              console.log(`[UptimeStatus] Detail bar ${i}: Entire interval is down (carry-over, no UP event found)`);
-            } else {
-              console.log(`[UptimeStatus] Bar ${i}: Entire bar is down (carry-over, no UP event found)`);
-            }
           }
         }
       }
@@ -318,44 +256,25 @@ const { apiKey, monitorId } = Astro.props;
           if (log.type === 1) {
             // Down event - find when it went back up
             const downStart = log.datetime;
-            console.log(`[UptimeStatus] Down event at: ${new Date(downStart * 1000).toString()} (UTC: ${new Date(downStart * 1000).toUTCString()})`);
             let downEnd = barEnd; // Assume down until end of period
             
             // Look for next "up" event
             for (let k = j + 1; k < barLogs.length; k++) {
               if (barLogs[k].type === 2) {
                 downEnd = Math.min(barLogs[k].datetime, barEnd);
-                console.log(`[UptimeStatus] Up event at: ${new Date(downEnd * 1000).toString()} (within same bar)`);
                 break;
-              }
-            }
-            
-            // If no UP event in this bar, check all logs after this bar
-            if (downEnd === barEnd) {
-              const laterLogs = logs.filter(l => l.datetime > barEnd && l.type === 2).sort((a, b) => a.datetime - b.datetime);
-              if (laterLogs.length > 0) {
-                console.log(`[UptimeStatus] Up event found in later bar at: ${new Date(laterLogs[0].datetime * 1000).toString()}`);
-              } else {
-                console.log(`[UptimeStatus] No UP event found, assuming down until end of bar`);
               }
             }
             
             // Subtract downtime from uptime
             const downDuration = downEnd - downStart;
             uptimeSeconds -= downDuration;
-            console.log(`[UptimeStatus] Downtime duration: ${downDuration}s (${Math.round(downDuration / 60)} minutes)`);
           }
         }
       }
       
       // Calculate percentage (ensure it's between 0 and 100)
       const barUptime = Math.max(0, Math.min(100, (uptimeSeconds / barDuration) * 100));
-      
-      if (detailView && (barLogs.length > 0 || carryOverDowntime)) {
-        console.log(`[UptimeStatus] Detail bar ${i} final uptime: ${barUptime.toFixed(2)}% (${uptimeSeconds}s uptime out of ${barDuration}s)`);
-      } else if (days === 1 && (barLogs.length > 0 || carryOverDowntime)) {
-        console.log(`[UptimeStatus] Bar ${i} final uptime: ${barUptime.toFixed(2)}% (${uptimeSeconds}s uptime out of ${barDuration}s)`);
-      }
       
       dailyStatus.push(Math.round(barUptime));
     }
@@ -585,8 +504,6 @@ const { apiKey, monitorId } = Astro.props;
     const periodLabelEl = document.getElementById("uptime-period-label");
 
     try {
-      console.log(`[UptimeStatus] Fetching data for ${days} days...`);
-
       // Fetch from our own API endpoint with period parameter
       const response = await fetch(`/api/uptime?days=${days}`, {
         method: "GET",
@@ -596,22 +513,14 @@ const { apiKey, monitorId } = Astro.props;
       });
 
       if (!response.ok) {
-        console.error(
-          `[UptimeStatus] API request failed with status: ${response.status}`
-        );
         throw new Error(`Failed to fetch uptime data: ${response.status}`);
       }
 
       const data: UptimeRobotResponse | { error: string; fallback: boolean } =
         await response.json();
-      console.log("[UptimeStatus] API Response:", data);
 
       // Check if it's an error response
       if ("error" in data && data.fallback) {
-        console.warn(
-          "[UptimeStatus] API returned fallback:",
-          data.error
-        );
         if (loadingEl) loadingEl.classList.add("hidden");
         if (errorEl) errorEl.classList.remove("hidden");
         return;
@@ -625,7 +534,6 @@ const { apiKey, monitorId } = Astro.props;
         data.monitors.length > 0
       ) {
         const monitor = data.monitors[0];
-        console.log("[UptimeStatus] Monitor data received:", monitor);
 
         // Get uptime percentage (7 days)
         let uptimePercentage = 99.9;
@@ -633,14 +541,10 @@ const { apiKey, monitorId } = Astro.props;
           uptimePercentage = parseFloat(monitor.custom_uptime_ratio);
         }
 
-        console.log("[UptimeStatus] Uptime percentage:", uptimePercentage);
-
         // Calculate daily status from logs
         const { dailyStatus } = monitor.logs
           ? calculateUptimeFromLogs(monitor.logs, days)
           : { dailyStatus: Array(days === 1 ? 24 : days >= 365 ? 12 : Math.min(days, 30)).fill(100) };
-
-        console.log("[UptimeStatus] Daily status:", dailyStatus);
 
         // Update UI
         if (percentageEl) {
@@ -682,7 +586,6 @@ const { apiKey, monitorId } = Astro.props;
         // Show content, hide loading
         if (loadingEl) loadingEl.classList.add("hidden");
         if (contentEl) contentEl.classList.remove("hidden");
-        console.log("[UptimeStatus] Successfully updated UI with real data");
       } else {
         console.error("[UptimeStatus] Invalid API response:", data);
         throw new Error("Invalid response from Uptime Robot API");
@@ -710,9 +613,6 @@ const { apiKey, monitorId } = Astro.props;
 
     // Prevent requests too close together
     if (timeSinceLastFetch < MIN_FETCH_INTERVAL && lastFetchTime > 0) {
-      console.warn(
-        `Rate limit protection: Skipping request (${Math.round(timeSinceLastFetch / 1000)}s since last fetch)`
-      );
       return;
     }
 
@@ -809,8 +709,6 @@ const { apiKey, monitorId } = Astro.props;
         const hourIndex = parseInt(bar.getAttribute('data-hour') || '0');
         const logs = (window as any).__hourlyLogs || [];
         
-        console.log(`[UptimeStatus] Drilling down to hour ${hourIndex}`);
-        
         // Set detail view state
         detailView = { hour: hourIndex, logs };
         
@@ -823,7 +721,6 @@ const { apiKey, monitorId } = Astro.props;
     const backBtn = document.getElementById('back-to-hours');
     if (backBtn) {
       backBtn.addEventListener('click', async () => {
-        console.log('[UptimeStatus] Returning to hourly view');
         detailView = null;
         await fetchUptimeStatus(1);
       });
