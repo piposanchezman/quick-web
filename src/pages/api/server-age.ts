@@ -7,8 +7,6 @@ export const GET: APIRoute = async ({ request }) => {
   try {
     // Calculate from the known server start date
     const serverStartDate = import.meta.env.SERVER_START_DATE || '2020-04-02';
-    console.log('[API /api/server-age] SERVER_START_DATE from env:', import.meta.env.SERVER_START_DATE);
-    console.log('[API /api/server-age] Using date:', serverStartDate);
     
     const startDate = new Date(serverStartDate);
     const now = new Date();

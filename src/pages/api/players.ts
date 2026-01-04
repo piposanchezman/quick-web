@@ -2,54 +2,16 @@ import type { APIRoute } from 'astro';
 
 /**
  * API endpoint to get registered players count
- * This endpoint connects to jPremium database or API
+ * This endpoint connects to jPremium database
  */
 export const GET: APIRoute = async ({ request }) => {
   try {
-    // Configuration from environment variables
-    const jPremiumApiUrl = import.meta.env.JPREMIUM_API_URL;
-    const jPremiumApiKey = import.meta.env.JPREMIUM_API_KEY;
-    
-    // Alternative: Direct database connection
     const dbHost = import.meta.env.JPREMIUM_DB_HOST;
     const dbPort = import.meta.env.JPREMIUM_DB_PORT;
     const dbName = import.meta.env.JPREMIUM_DB_NAME;
     const dbUser = import.meta.env.JPREMIUM_DB_USER;
     const dbPass = import.meta.env.JPREMIUM_DB_PASS;
 
-    // Method 1: If jPremium has an API endpoint (COMMENTED OUT)
-    /*
-    if (jPremiumApiUrl && jPremiumApiKey) {
-      try {
-        const response = await fetch(`${jPremiumApiUrl}/players/count`, {
-          headers: {
-            'Authorization': `Bearer ${jPremiumApiKey}`,
-          },
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          return new Response(
-            JSON.stringify({
-              count: data.count || 0,
-              source: 'api',
-            }),
-            {
-              status: 200,
-              headers: {
-                'Content-Type': 'application/json',
-                'Cache-Control': 'public, max-age=3600', // Cache for 1 hour
-              },
-            }
-          );
-        }
-      } catch (apiError) {
-        console.error('[API /api/players] API method failed:', apiError);
-      }
-    }
-    */
-
-    // Method 2: Direct database query (requires mysql2 package)
     if (dbHost && dbName && dbUser && dbPass) {
       const mysql = await import('mysql2/promise');
       
@@ -82,7 +44,6 @@ export const GET: APIRoute = async ({ request }) => {
       );
     }
 
-    // Database not configured
     return new Response(
       JSON.stringify({
         error: 'Database not configured',
