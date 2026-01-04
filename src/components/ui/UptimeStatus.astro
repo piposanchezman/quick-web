@@ -1,0 +1,730 @@
+---
+/**
+ * UptimeStatus Component
+ * Displays server uptime information from Uptime Robot API
+ * Shows last 7 days status bars and uptime percentage
+ */
+
+interface Props {
+  apiKey?: string;
+  monitorId?: string;
+}
+
+const { apiKey, monitorId } = Astro.props;
+---
+
+<div
+  id="uptime-status"
+  class="bg-black/20 p-6 rounded-2xl border border-white/5 hover:border-[#33cccc]/30 transition-colors"
+>
+  <!-- Loading State -->
+  <div id="uptime-loading" class="text-center">
+    <div class="animate-pulse">
+      <div
+        class="text-4xl font-black text-[#33cccc] mb-2 drop-shadow-[0_0_10px_rgba(51,204,204,0.4)]"
+      >
+        --.--%
+      </div>
+      <div
+        class="text-sm text-gray-400 uppercase tracking-wider font-bold mb-4"
+        data-i18n="about.uptime"
+      >
+      </div>
+      <div class="flex flex-col gap-2">
+        <div class="flex gap-1 justify-center items-end h-8">
+          {Array.from({ length: 7 }).map(() => (
+            <div class="w-6 h-4 bg-gray-700 rounded-sm animate-pulse" />
+          ))}
+        </div>
+        <div class="flex gap-1 justify-center text-[10px] text-gray-600">
+          {['D', 'L', 'M', 'X', 'J', 'V', 'S'].map((day) => (
+            <div class="w-6 text-center font-medium">{day}</div>
+          ))}
+        </div>
+      </div>
+      <div class="text-xs text-gray-500 mt-1" data-i18n="about.uptimeDays">
+      </div>
+    </div>
+  </div>
+
+  <!-- Content (hidden initially) -->
+  <div id="uptime-content" class="hidden">
+    <div
+      id="uptime-percentage"
+      class="text-4xl font-black text-[#33cccc] mb-2 drop-shadow-[0_0_10px_rgba(51,204,204,0.4)] text-center"
+    >
+      99.9%
+    </div>
+    <div
+      class="text-sm text-gray-400 uppercase tracking-wider font-bold mb-4 text-center"
+      data-i18n="about.uptime"
+    >
+    </div>
+
+    <!-- Period Selector -->
+    <div class="flex gap-2 justify-center mb-4">
+      <!-- Back button for detail view -->
+      <button
+        id="back-to-hours"
+        class="hidden items-center gap-1 px-3 py-1 text-xs rounded-lg bg-[#33cccc]/20 text-[#33cccc] border border-[#33cccc]/30 hover:bg-[#33cccc]/30 transition-colors"
+        data-i18n="about.back"
+      >
+        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+        </svg>
+      </button>
+      
+      <button
+        data-period="1"
+        class="uptime-period-btn px-3 py-1 text-xs rounded-lg bg-[#33cccc]/20 text-[#33cccc] border border-[#33cccc]/30 hover:bg-[#33cccc]/30 transition-colors active"
+      >
+        24h
+      </button>
+      <button
+        data-period="7"
+        class="uptime-period-btn px-3 py-1 text-xs rounded-lg bg-black/20 text-gray-400 border border-white/10 hover:bg-white/5 transition-colors"
+      >
+        7d
+      </button>
+      <button
+        data-period="30"
+        class="uptime-period-btn px-3 py-1 text-xs rounded-lg bg-black/20 text-gray-400 border border-white/10 hover:bg-white/5 transition-colors"
+      >
+        30d
+      </button>
+      <button
+        data-period="365"
+        class="uptime-period-btn px-3 py-1 text-xs rounded-lg bg-black/20 text-gray-400 border border-white/10 hover:bg-white/5 transition-colors"
+      >
+        12m
+      </button>
+    </div>
+
+    <!-- Uptime Bars -->
+    <div id="uptime-bars-container" class="flex justify-center">
+      <!-- Bars will be injected here -->
+    </div>
+    <div
+      id="uptime-period-label"
+      class="text-xs text-gray-500 mt-4 text-center"
+      data-i18n="about.last24hours"
+    >
+    </div>
+    <div class="text-[10px] text-gray-600 text-center mt-1">
+      <span data-i18n="about.timezone"></span>: <span id="timezone-label">--</span>
+    </div>
+  </div>
+
+  <!-- Error State -->
+  <div id="uptime-error" class="hidden text-center">
+    <div
+      class="text-4xl font-black text-[#33cccc] mb-2 drop-shadow-[0_0_10px_rgba(51,204,204,0.4)]"
+    >
+      99.9%
+    </div>
+    <div
+      class="text-sm text-gray-400 uppercase tracking-wider font-bold"
+      data-i18n="about.uptime"
+    >
+    </div>
+  </div>
+</div>
+
+<script>
+  interface UptimeRobotResponse {
+    stat: string;
+    monitors: Array<{
+      status: number;
+      custom_uptime_ratio?: string;
+      custom_uptime_ranges?: string;
+      logs?: Array<{
+        type: number;
+        datetime: number;
+      }>;
+    }>;
+  }
+
+  // Function to calculate uptime from logs for the specified period
+  // Note: Uses browser's local timezone for hour boundaries
+  // Unix timestamps from Uptime Robot are in UTC, but Date() converts them to local time
+  function calculateUptimeFromLogs(
+    logs: Array<{ type: number; datetime: number }>,
+    days: number
+  ): { percentage: number; dailyStatus: number[] } {
+    const now = Date.now() / 1000; // Convert to seconds
+    
+    // Calculate status for each period
+    let numBars: number;
+    let barDuration: number;
+    let startTime: number;
+    
+    if (detailView) {
+      // For detail view, show 12 bars of 5 minutes each
+      numBars = 12;
+      barDuration = 5 * 60; // 5 minutes in seconds
+      // Calculate start of the selected hour
+      const nowDate = new Date();
+      const currentHour = nowDate.getHours();
+      const targetHour = (currentHour - 23 + detailView.hour + 24) % 24;
+      const currentHourStart = new Date(nowDate.getFullYear(), nowDate.getMonth(), nowDate.getDate(), nowDate.getHours(), 0, 0);
+      const hoursBack = (currentHour - targetHour + 24) % 24;
+      startTime = currentHourStart.getTime() / 1000 - (hoursBack * 60 * 60);
+    } else if (days === 1) {
+      // For 24 hours, show hourly bars aligned to hour boundaries
+      numBars = 24;
+      barDuration = 60 * 60; // 1 hour in seconds
+      // Round down to the start of the current hour in local timezone
+      const nowDate = new Date();
+      const currentHourStart = new Date(nowDate.getFullYear(), nowDate.getMonth(), nowDate.getDate(), nowDate.getHours(), 0, 0);
+      startTime = currentHourStart.getTime() / 1000 - (23 * 60 * 60); // 23 hours before current hour
+    } else if (days >= 365) {
+      // For 1 year, show 12 monthly bars
+      numBars = 12;
+      barDuration = (days * 24 * 60 * 60) / 12; // Approximately 1 month
+      startTime = now - days * 24 * 60 * 60;
+    } else {
+      // For other periods, adjust granularity
+      numBars = Math.min(days, 30); // Max 30 bars for visualization
+      barDuration = (days * 24 * 60 * 60) / numBars;
+      startTime = now - days * 24 * 60 * 60;
+    }
+
+    // Filter logs for the period
+    // For detail view, we need to include logs from before startTime to detect carry-over downtimes
+    const lookbackTime = detailView ? startTime - (24 * 60 * 60) : startTime; // Look back 24 hours for detail view
+    const recentLogs = logs.filter((log) => log.datetime >= lookbackTime);
+
+    const dailyStatus: number[] = [];
+    let totalUptime = 0;
+
+    for (let i = 0; i < numBars; i++) {
+      const barStart = startTime + i * barDuration;
+      const barEnd = barStart + barDuration;
+
+      // Check logs for this period
+      const barLogs = recentLogs.filter(
+        (log) => log.datetime >= barStart && log.datetime < barEnd
+      ).sort((a, b) => a.datetime - b.datetime);
+
+      // Calculate uptime based on time duration, not just log count
+      let uptimeSeconds = barDuration; // Start assuming full uptime
+      
+      // Check if there was a DOWN event from a previous bar that extends into this one
+      // Find the most recent DOWN event before this bar
+      let lastDownBeforeBar: { type: number; datetime: number } | null = null;
+      for (let j = recentLogs.length - 1; j >= 0; j--) {
+        if (recentLogs[j].type === 1 && recentLogs[j].datetime < barStart) {
+          lastDownBeforeBar = recentLogs[j];
+          break;
+        }
+      }
+      
+      let carryOverDowntime = false;
+      if (lastDownBeforeBar) {
+        // Check if this DOWN was resolved by an UP event before this bar starts
+        const upAfterDown = recentLogs.find(l => 
+          l.type === 2 && 
+          l.datetime > lastDownBeforeBar!.datetime && 
+          l.datetime < barStart
+        );
+        
+        if (!upAfterDown) {
+          // No UP event between the DOWN and this bar start, so downtime carries over
+          carryOverDowntime = true;
+          
+          // Find when it came back up
+          const laterUp = recentLogs.find(l => l.type === 2 && l.datetime > lastDownBeforeBar!.datetime);
+          
+          if (laterUp && laterUp.datetime < barEnd) {
+            // UP event is in this bar
+            const downtimeInBar = laterUp.datetime - barStart;
+            uptimeSeconds -= downtimeInBar;
+          } else if (laterUp) {
+            // UP event is after this bar, entire bar is down
+            uptimeSeconds = 0;
+          } else {
+            // No UP event found, still down
+            uptimeSeconds = 0;
+          }
+        }
+      }
+      
+      if (barLogs.length > 0 && !carryOverDowntime) {
+        // Find all down periods and subtract from total
+        for (let j = 0; j < barLogs.length; j++) {
+          const log = barLogs[j];
+          
+          if (log.type === 1) {
+            // Down event - find when it went back up
+            const downStart = log.datetime;
+            let downEnd = barEnd; // Assume down until end of period
+            
+            // Look for next "up" event
+            for (let k = j + 1; k < barLogs.length; k++) {
+              if (barLogs[k].type === 2) {
+                downEnd = Math.min(barLogs[k].datetime, barEnd);
+                break;
+              }
+            }
+            
+            // Subtract downtime from uptime
+            const downDuration = downEnd - downStart;
+            uptimeSeconds -= downDuration;
+          }
+        }
+      }
+      
+      // Calculate percentage (ensure it's between 0 and 100)
+      const barUptime = Math.max(0, Math.min(100, (uptimeSeconds / barDuration) * 100));
+      
+      dailyStatus.push(barUptime);
+      totalUptime += barUptime;
+    }
+
+    // Calculate overall percentage
+    const avgUptime = totalUptime / numBars;
+
+    return { percentage: avgUptime, dailyStatus };
+  }
+
+  // Function to get timezone info
+  function getTimezoneInfo(): { offset: string; name: string } {
+    const now = new Date();
+    const offsetMinutes = -now.getTimezoneOffset();
+    const offsetHours = Math.floor(Math.abs(offsetMinutes) / 60);
+    const offsetMins = Math.abs(offsetMinutes) % 60;
+    const sign = offsetMinutes >= 0 ? '+' : '-';
+    const offset = `GMT${sign}${offsetHours}${offsetMins > 0 ? ':' + offsetMins.toString().padStart(2, '0') : ''}`;
+    
+    // Try to get timezone name
+    const formatter = new Intl.DateTimeFormat('es', { timeZoneName: 'short' });
+    const parts = formatter.formatToParts(now);
+    const timezonePart = parts.find(part => part.type === 'timeZoneName');
+    const name = timezonePart ? timezonePart.value : offset;
+    
+    return { offset, name };
+  }
+
+  // Function to get color based on uptime percentage
+  function getUptimeColor(percentage: number): string {
+    if (percentage >= 100) return "#33cccc";
+    if (percentage >= 90) return "#48bdbd";
+    if (percentage >= 80) return "#5daeae";
+    if (percentage >= 70) return "#729f9f";
+    if (percentage >= 60) return "#879090";
+    if (percentage >= 50) return "#9c8181";
+    if (percentage >= 40) return "#b17272";
+    if (percentage >= 30) return "#c66363";
+    if (percentage >= 20) return "#db5454";
+    return "#ee4444";
+  }
+
+  // Function to get day abbreviations for the period
+  function getDayAbbreviations(days: number): string[] {
+    const labels: string[] = [];
+    const now = new Date();
+    
+    if (detailView) {
+      // Show 5-minute intervals for detail view (12 bars per hour)
+      for (let i = 0; i < 12; i++) {
+        const minutes = i * 5;
+        labels.push(`:${minutes.toString().padStart(2, '0')}`);
+      }
+    } else if (days === 1) {
+      // Show hours for 24h view aligned to hour boundaries
+      // Start from 23 hours before current hour
+      const currentHour = now.getHours();
+      for (let i = 0; i < 24; i++) {
+        const hourValue = (currentHour - 23 + i + 24) % 24;
+        labels.push(hourValue.toString().padStart(2, '0') + ':00');
+      }
+    } else if (days <= 7) {
+      // Show day/month for 7 days
+      const numBars = Math.min(days, 30);
+      for (let i = numBars - 1; i >= 0; i--) {
+        const date = new Date(now);
+        date.setDate(date.getDate() - i);
+        const day = date.getDate().toString().padStart(2, '0');
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        labels.push(`${day}/${month}`);
+      }
+    } else if (days <= 30) {
+      // Show day/month for 30 days
+      const numBars = Math.min(days, 30);
+      for (let i = numBars - 1; i >= 0; i--) {
+        const date = new Date(now);
+        date.setDate(date.getDate() - i);
+        const day = date.getDate().toString().padStart(2, '0');
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        labels.push(`${day}/${month}`);
+      }
+    } else {
+      // For year view, show month abbreviations
+      const monthsBack = 12;
+      const monthKeys = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+      
+      for (let i = monthsBack - 1; i >= 0; i--) {
+        const date = new Date(now);
+        date.setMonth(date.getMonth() - i);
+        const monthKey = monthKeys[date.getMonth()];
+        const translationKey = `about.months.${monthKey}`;
+        // @ts-ignore - getI18n is defined globally in Layout
+        const monthName = window.getI18n?.(translationKey) || monthKey.charAt(0).toUpperCase() + monthKey.slice(1);
+        labels.push(monthName);
+      }
+    }
+    
+    return labels;
+  }
+
+  // Function to format date for tooltip
+  function formatDate(barIndex: number, period: number, totalBars: number): string {
+    if (period === 1) {
+      // For 24h view, show time aligned to hour boundaries
+      const now = new Date();
+      const currentHour = now.getHours();
+      const hourValue = (currentHour - 23 + barIndex + 24) % 24;
+      return `${hourValue.toString().padStart(2, '0')}:00`;
+    } else if (period <= 30) {
+      // For days, show date
+      const periodsAgo = totalBars - 1 - barIndex;
+      const date = new Date();
+      date.setDate(date.getDate() - periodsAgo);
+      const day = date.getDate().toString().padStart(2, '0');
+      const month = (date.getMonth() + 1).toString().padStart(2, '0');
+      return `${day}/${month}`;
+    } else {
+      // For year view, show month/year
+      const periodsAgo = totalBars - 1 - barIndex;
+      const date = new Date();
+      date.setDate(date.getDate() - periodsAgo);
+      const month = (date.getMonth() + 1).toString().padStart(2, '0');
+      const year = date.getFullYear();
+      return `${month}/${year}`;
+    }
+  }
+
+  // Function to create uptime bars
+  function createUptimeBars(dailyStatus: number[], period: number): string {
+    const numBars = dailyStatus.length;
+    let numRows = 1;
+    let barsPerRow = numBars;
+    
+    // Determine rows based on period
+    if (period === 1 && !detailView) {
+      // 24 hours: 2 rows of 12 bars (only when not in detail view)
+      numRows = 2;
+      barsPerRow = 12;
+    } else if (period === 30) {
+      // 30 days: 2 rows of 15 bars
+      numRows = 2;
+      barsPerRow = 15;
+    } else {
+      // 7 days, 1 year, and detail view: single row
+      numRows = 1;
+      barsPerRow = numBars;
+    }
+    
+    // Adjust row height based on number of rows to keep total height consistent
+    const totalHeight = 140;
+    const gapHeight = 8; // gap-2 = 8px
+    const rowHeight = numRows === 1 ? totalHeight : (totalHeight - gapHeight) / 2;
+    
+    if (numRows === 1) {
+      return `<div class="flex gap-1 items-end w-full" style="height: ${rowHeight}px;">${createBarRow(dailyStatus, 0, period, numBars)}</div>`;
+    } else {
+      // Multiple rows
+      let html = '<div class="flex flex-col gap-2 w-full">';
+      
+      for (let row = 0; row < numRows; row++) {
+        const startIdx = row * barsPerRow;
+        const endIdx = Math.min(startIdx + barsPerRow, numBars);
+        const rowBars = dailyStatus.slice(startIdx, endIdx);
+        
+        html += `<div class="flex gap-1 items-end w-full" style="height: ${rowHeight}px;">${createBarRow(rowBars, startIdx, period, numBars)}</div>`;
+      }
+      
+      html += '</div>';
+      return html;
+    }
+  }
+  
+  function createBarRow(bars: number[], startIndex: number, period: number, totalBars: number): string {
+    const labels = getDayAbbreviations(period);
+    const fontSize = 'text-[10px]';
+    const labelFontSize = 'text-[8px]';
+    const isHourlyView = period === 1 && !detailView; // Only clickable in 24h view, not in detail
+    
+    return bars
+      .map((uptime, idx) => {
+        const index = startIndex + idx;
+        const color = getUptimeColor(uptime);
+        const height = uptime < 10 ? 10 : uptime;
+        const opacity = uptime >= 95 ? 1 : 0.6;
+        const label = labels[index] || '';
+        const clickableClass = isHourlyView ? 'cursor-pointer' : 'cursor-default';
+        const dataAttr = isHourlyView ? `data-hour="${index}"` : '';
+
+        return `
+        <div class="uptime-bar-container flex flex-col items-center justify-end gap-1 transition-all duration-200" style="flex: 1; height: 100%; min-width: 0;">
+          <div 
+            class="uptime-bar w-full rounded-t flex items-center justify-center relative ${clickableClass} hover:scale-104 hover:z-4"
+            style="background-color: ${color}; height: ${height}%; opacity: ${opacity}; transition: all 0.2s ease;"
+            ${dataAttr}
+          >
+            <div class="uptime-percentage ${fontSize} font-bold text-white leading-tight text-center opacity-0 transition-opacity whitespace-nowrap bg-black/80 px-1 py-1 rounded pointer-events-none" style="writing-mode: vertical-rl; text-orientation: mixed;">
+              ${uptime.toFixed(1)}%
+            </div>
+          </div>
+          <div class="${labelFontSize} text-gray-400 font-semibold text-center leading-tight whitespace-nowrap overflow-hidden text-ellipsis w-full">
+            ${label}
+          </div>
+        </div>
+      `;
+      })
+      .join("");
+  }
+
+  // Function to create day labels - no longer needed, labels are with bars
+  function createDayLabels(period: number): string {
+    return ''; // Labels are now integrated into bars
+  }
+
+  // Main function to fetch and display uptime
+  let currentPeriod = 1; // Default to 24 hours
+  let detailView: { hour: number; logs: Array<{ type: number; datetime: number }> } | null = null;
+
+  async function fetchUptimeStatus(days: number = currentPeriod) {
+    const loadingEl = document.getElementById("uptime-loading");
+    const contentEl = document.getElementById("uptime-content");
+    const errorEl = document.getElementById("uptime-error");
+    const percentageEl = document.getElementById("uptime-percentage");
+    const barsEl = document.getElementById("uptime-bars-container");
+    const periodLabelEl = document.getElementById("uptime-period-label");
+
+    try {
+      // Fetch from our own API endpoint with period parameter
+      const response = await fetch(`/api/uptime?days=${days}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch uptime data: ${response.status}`);
+      }
+
+      const data: UptimeRobotResponse | { error: string; fallback: boolean } =
+        await response.json();
+
+      // Check if it's an error response
+      if ("error" in data && data.fallback) {
+        if (loadingEl) loadingEl.classList.add("hidden");
+        if (errorEl) errorEl.classList.remove("hidden");
+        return;
+      }
+
+      // Type guard to ensure we have the correct response
+      if (
+        "stat" in data &&
+        data.stat === "ok" &&
+        data.monitors &&
+        data.monitors.length > 0
+      ) {
+        const monitor = data.monitors[0];
+
+        // Calculate daily status from logs
+        const { percentage, dailyStatus } = monitor.logs
+          ? calculateUptimeFromLogs(monitor.logs, days)
+          : { 
+              percentage: 99.9,
+              dailyStatus: Array(days === 1 ? 24 : days >= 365 ? 12 : Math.min(days, 30)).fill(100) 
+            };
+
+        // Use calculated percentage for the selected period
+        const uptimePercentage = percentage;
+
+        // Update UI
+        if (percentageEl) {
+          percentageEl.textContent = `${uptimePercentage.toFixed(2)}%`;
+          const color = getUptimeColor(uptimePercentage);
+          percentageEl.style.color = color;
+          percentageEl.style.textShadow = `0 0 10px ${color}40`;
+        }
+
+        if (barsEl) {
+          barsEl.innerHTML = createUptimeBars(dailyStatus, days);
+        }
+        
+        // Update period label for detail view
+        if (periodLabelEl && detailView !== null) {
+          const now = new Date();
+          const currentHour = now.getHours();
+          const targetHour = (currentHour - 23 + detailView.hour + 24) % 24;
+          periodLabelEl.textContent = `Detalles de ${targetHour.toString().padStart(2, '0')}:00 (intervalos de 5 minutos)`;
+        }
+        
+        // Store logs for potential detail view
+        if (days === 1 && monitor.logs) {
+          (window as any).__hourlyLogs = monitor.logs;
+        }
+        
+        // Update back button visibility
+        const backBtn = document.getElementById('back-to-hours');
+        if (backBtn) {
+          if (detailView) {
+            backBtn.classList.remove('hidden');
+            backBtn.classList.add('flex');
+          } else {
+            backBtn.classList.add('hidden');
+            backBtn.classList.remove('flex');
+          }
+        }
+
+        // Show content, hide loading
+        if (loadingEl) loadingEl.classList.add("hidden");
+        if (contentEl) contentEl.classList.remove("hidden");
+      } else {
+        console.error("[UptimeStatus] Invalid API response:", data);
+        throw new Error("Invalid response from Uptime Robot API");
+      }
+    } catch (error) {
+      console.error("[UptimeStatus] Error fetching uptime status:", error);
+
+      // Show error state
+      if (loadingEl) loadingEl.classList.add("hidden");
+      if (errorEl) errorEl.classList.remove("hidden");
+    }
+  }
+
+  // Rate limit protection
+  // Uptime Robot free tier: 10 requests/minute
+  // Using 5-minute interval = 12 requests/hour (well within limits)
+  const UPDATE_INTERVAL = 5 * 60 * 1000; // 5 minutes
+  
+  let lastFetchTime = 0;
+  const MIN_FETCH_INTERVAL = 60 * 1000; // Minimum 1 minute between requests
+
+  async function safeFetchUptimeStatus() {
+    const now = Date.now();
+    const timeSinceLastFetch = now - lastFetchTime;
+
+    // Prevent requests too close together
+    if (timeSinceLastFetch < MIN_FETCH_INTERVAL && lastFetchTime > 0) {
+      return;
+    }
+
+    lastFetchTime = now;
+    await fetchUptimeStatus();
+  }
+
+  // Initialize on DOM load
+  document.addEventListener("DOMContentLoaded", () => {
+    // Update timezone label
+    const tzInfo = getTimezoneInfo();
+    const tzLabel = document.getElementById('timezone-label');
+    if (tzLabel) {
+      tzLabel.textContent = tzInfo.offset;
+    }
+    
+    safeFetchUptimeStatus();
+
+    // Refresh every 5 minutes (12 req/hour, well below 10 req/min limit)
+    setInterval(safeFetchUptimeStatus, UPDATE_INTERVAL);
+
+    // Period selector buttons
+    const periodButtons = document.querySelectorAll('.uptime-period-btn');
+    periodButtons.forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const period = parseInt(btn.getAttribute('data-period') || '1');
+        currentPeriod = period;
+        
+        // Reset detail view when changing periods
+        detailView = null;
+        
+        // Update active state
+        periodButtons.forEach(b => {
+          b.classList.remove('active', 'bg-[#33cccc]/20', 'text-[#33cccc]', 'border-[#33cccc]/30');
+          b.classList.add('bg-black/20', 'text-gray-400', 'border-white/10');
+        });
+        btn.classList.add('active', 'bg-[#33cccc]/20', 'text-[#33cccc]', 'border-[#33cccc]/30');
+        btn.classList.remove('bg-black/20', 'text-gray-400', 'border-white/10');
+
+        // Update period label
+        const periodLabelEl = document.getElementById('uptime-period-label');
+        if (periodLabelEl) {
+          const labelKeys: Record<number, string> = {
+            1: 'about.last24hours',
+            7: 'about.last7days',
+            30: 'about.last30days',
+            365: 'about.last12months',
+          };
+          const labelKey = labelKeys[period] || 'about.last7days';
+          periodLabelEl.setAttribute('data-i18n', labelKey);
+          // @ts-ignore - getI18n is defined globally in Layout
+          periodLabelEl.textContent = window.getI18n?.(labelKey) || '';
+        }
+
+        // Fetch new data
+        await fetchUptimeStatus(period);
+      });
+    });
+    
+    // Add hover effect for bars
+    document.addEventListener('mouseover', (e) => {
+      const bar = (e.target as HTMLElement).closest('.uptime-bar');
+      if (bar) {
+        const percentage = bar.querySelector('.uptime-percentage');
+        if (percentage) {
+          (percentage as HTMLElement).style.opacity = '1';
+        }
+      }
+    });
+    
+    document.addEventListener('mouseout', (e) => {
+      const bar = (e.target as HTMLElement).closest('.uptime-bar');
+      if (bar) {
+        const percentage = bar.querySelector('.uptime-percentage');
+        if (percentage) {
+          (percentage as HTMLElement).style.opacity = '0';
+        }
+      }
+    });
+    
+    // Add click event for drill-down to 5-minute view
+    document.addEventListener('click', async (e) => {
+      const bar = (e.target as HTMLElement).closest('.uptime-bar[data-hour]');
+      if (bar && currentPeriod === 1 && !detailView) {
+        const hourIndex = parseInt(bar.getAttribute('data-hour') || '0');
+        const logs = (window as any).__hourlyLogs || [];
+        
+        // Set detail view state
+        detailView = { hour: hourIndex, logs };
+        
+        // Refresh display with detail view
+        await fetchUptimeStatus(1);
+      }
+    });
+    
+    // Back button to return to hourly view
+    const backBtn = document.getElementById('back-to-hours');
+    if (backBtn) {
+      backBtn.addEventListener('click', async () => {
+        detailView = null;
+        await fetchUptimeStatus(1);
+      });
+    }
+  });
+
+  // Handle visibility change to pause requests when tab is not visible
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) {
+      // Only fetch if it's been more than MIN_FETCH_INTERVAL
+      const timeSinceLastFetch = Date.now() - lastFetchTime;
+      if (timeSinceLastFetch >= MIN_FETCH_INTERVAL) {
+        safeFetchUptimeStatus();
+      }
+    }
+  });
+</script>

@@ -1,4 +1,8 @@
 ---
+import UptimeStatus from "../ui/UptimeStatus.astro";
+import PlayerCount from "../ui/PlayerCount.astro";
+import ServerAge from "../ui/ServerAge.astro";
+
 interface Props {
   translations: any;
 }
@@ -10,7 +14,7 @@ const { translations: t } = Astro.props;
   <div class="max-w-6xl mx-auto relative">
     <!-- Decorative Glow -->
     <div
-      class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#55ffff]/5 rounded-full blur-[100px] -z-10"
+      class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-150 h-150 bg-[#55ffff]/5 rounded-full blur-[100px] -z-10"
     >
     </div>
 
@@ -27,7 +31,7 @@ const { translations: t } = Astro.props;
     >
       <!-- Subtle shine effect -->
       <div
-        class="absolute inset-0 bg-gradient-to-tr from-white/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none"
+        class="absolute inset-0 bg-linear-to-tr from-white/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none"
       >
       </div>
 
@@ -43,51 +47,13 @@ const { translations: t } = Astro.props;
         </div>
 
         <!-- Stats Grid -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 relative z-10">
-          <!-- Stat 1 -->
-          <div
-            class="bg-black/20 p-6 rounded-2xl border border-white/5 hover:border-[#55ffff]/30 transition-colors text-center"
-          >
-            <div
-              class="text-4xl font-black text-[#55ffff] mb-2 drop-shadow-[0_0_10px_rgba(85,255,255,0.4)]"
-            >
-              10k+
-            </div>
-            <div
-              class="text-sm text-gray-400 uppercase tracking-wider font-bold"
-            >
-              {t['about.players']}
-            </div>
-          </div>
-          <!-- Stat 2 -->
-          <div
-            class="bg-black/20 p-6 rounded-2xl border border-white/5 hover:border-[#33cccc]/30 transition-colors text-center"
-          >
-            <div
-              class="text-4xl font-black text-[#33cccc] mb-2 drop-shadow-[0_0_10px_rgba(51,204,204,0.4)]"
-            >
-              99.9%
-            </div>
-            <div
-              class="text-sm text-gray-400 uppercase tracking-wider font-bold"
-            >
-              {t['about.uptime']}
-            </div>
-          </div>
-          <!-- Stat 3 -->
-          <div
-            class="bg-black/20 p-6 rounded-2xl border border-white/5 hover:border-[#f59e0b]/30 transition-colors text-center sm:col-span-2"
-          >
-            <div
-              class="text-4xl font-black text-[#f59e0b] mb-2 drop-shadow-[0_0_10px_rgba(245,158,11,0.4)]"
-            >
-              5
-            </div>
-            <div
-              class="text-sm text-gray-400 uppercase tracking-wider font-bold"
-            >
-              {t['about.years']}
-            </div>
+        <div class="grid grid-cols-1 gap-6 relative z-10">
+          <!-- Row 1 - Uptime (full width) -->
+          <UptimeStatus />
+          <!-- Row 2 - Players and Years in same row -->
+          <div class="grid grid-cols-2 gap-6">
+            <PlayerCount />
+            <ServerAge />
           </div>
         </div>
       </div>

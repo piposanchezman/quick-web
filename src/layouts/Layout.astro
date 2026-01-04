@@ -2,6 +2,7 @@
 import GlobalBackground from "../components/layout/GlobalBackground.astro";
 import { SITE_CONFIG } from "../constants";
 import type { Locale } from "../i18n/utils";
+import { translations } from "../i18n/translations";
 
 interface Props {
     title?: string;
@@ -14,7 +15,6 @@ const {
     title = SITE_CONFIG.title,
     description = SITE_CONFIG.description,
     locale,
-    translations
 } = Astro.props;
 
 const htmlLang = locale === 'pt' ? 'pt-BR' : locale;
@@ -140,6 +140,67 @@ const htmlLang = locale === 'pt' ? 'pt-BR' : locale;
                 // Export to window
                 window.showToast = showToast;
             });
+        </script>
+        
+        <script define:vars={{ translations }}>
+            // Make translations available globally
+            window.translations = translations;
+            
+            // Get current locale and translations
+            const getCurrentLocale = () => {
+                const lang = document.documentElement.lang.split('-')[0] || 'es';
+                return (lang === 'en' || lang === 'pt') ? lang : 'es';
+            };
+            
+            const getTranslations = () => {
+                const locale = getCurrentLocale();
+                return window.translations[locale] || window.translations['es'];
+            };
+            
+            // Update a single element with translation
+            const updateElement = (el, trans) => {
+                const key = el.getAttribute('data-i18n');
+                if (key && trans[key]) {
+                    el.textContent = trans[key];
+                }
+            };
+            
+            // Update all i18n elements
+            const updateI18nElements = (rootElement = document) => {
+                const trans = getTranslations();
+                rootElement.querySelectorAll('[data-i18n]').forEach(el => updateElement(el, trans));
+            };
+            
+            // Optimized mutation observer - only update new nodes
+            const observer = new MutationObserver((mutations) => {
+                const trans = getTranslations();
+                
+                mutations.forEach((mutation) => {
+                    mutation.addedNodes.forEach((node) => {
+                        if (node.nodeType !== 1) return;
+                        
+                        // Update if node itself has data-i18n
+                        if (node.hasAttribute?.('data-i18n')) {
+                            updateElement(node, trans);
+                        }
+                        
+                        // Update children with data-i18n
+                        node.querySelectorAll?.('[data-i18n]').forEach(el => updateElement(el, trans));
+                    });
+                });
+            });
+            
+            // Initialize
+            document.addEventListener('DOMContentLoaded', () => {
+                updateI18nElements();
+                observer.observe(document.body, { childList: true, subtree: true });
+            });
+            
+            // Expose utility function globally
+            window.getI18n = (key) => {
+                const trans = getTranslations();
+                return trans[key] || key;
+            };
         </script>
     </body>
 </html>
