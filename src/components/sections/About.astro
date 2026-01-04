@@ -2,13 +2,19 @@
 import UptimeStatus from "../ui/UptimeStatus.astro";
 import PlayerCount from "../ui/PlayerCount.astro";
 import ServerAge from "../ui/ServerAge.astro";
+
+interface Props {
+  translations: any;
+}
+
+const { translations: t } = Astro.props;
 ---
 
 <section id="nosotros" class="py-24 px-4 relative z-10 overflow-hidden">
   <div class="max-w-6xl mx-auto relative">
     <!-- Decorative Glow -->
     <div
-      class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#55ffff]/5 rounded-full blur-[100px] -z-10"
+      class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-150 h-150 bg-[#55ffff]/5 rounded-full blur-[100px] -z-10"
     >
     </div>
 
@@ -25,7 +31,7 @@ import ServerAge from "../ui/ServerAge.astro";
     >
       <!-- Subtle shine effect -->
       <div
-        class="absolute inset-0 bg-gradient-to-tr from-white/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none"
+        class="absolute inset-0 bg-linear-to-tr from-white/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none"
       >
       </div>
 
