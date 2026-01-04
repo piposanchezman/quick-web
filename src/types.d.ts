@@ -9,5 +9,6 @@ declare global {
                 [key: string]: string;
             };
         };
+        getI18n?: (key: string) => string;
     }
 }

@@ -360,9 +360,6 @@ const { apiKey, monitorId } = Astro.props;
     } else {
       // For year view, show month abbreviations
       const monthsBack = 12;
-      const currentLang = document.documentElement.lang.split('-')[0] || 'es';
-      // @ts-ignore - translations are added globally in Layout
-      const trans = window.translations?.[currentLang] || window.translations?.['es'];
       const monthKeys = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
       
       for (let i = monthsBack - 1; i >= 0; i--) {
@@ -370,7 +367,8 @@ const { apiKey, monitorId } = Astro.props;
         date.setMonth(date.getMonth() - i);
         const monthKey = monthKeys[date.getMonth()];
         const translationKey = `about.months.${monthKey}`;
-        const monthName = trans?.[translationKey] || monthKeys[date.getMonth()].charAt(0).toUpperCase() + monthKeys[date.getMonth()].slice(1);
+        // @ts-ignore - getI18n is defined globally in Layout
+        const monthName = window.getI18n?.(translationKey) || monthKey.charAt(0).toUpperCase() + monthKey.slice(1);
         labels.push(monthName);
       }
     }
@@ -660,14 +658,8 @@ const { apiKey, monitorId } = Astro.props;
           };
           const labelKey = labelKeys[period] || 'about.last7days';
           periodLabelEl.setAttribute('data-i18n', labelKey);
-          
-          // Update text using global translations
-          const currentLang = document.documentElement.lang.split('-')[0] || 'es';
-          // @ts-ignore - translations are added globally in Layout
-          const trans = window.translations?.[currentLang] || window.translations?.['es'];
-          if (trans && trans[labelKey]) {
-            periodLabelEl.textContent = trans[labelKey];
-          }
+          // @ts-ignore - getI18n is defined globally in Layout
+          periodLabelEl.textContent = window.getI18n?.(labelKey) || '';
         }
 
         // Fetch new data
