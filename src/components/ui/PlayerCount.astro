@@ -1,0 +1,88 @@
+---
+/**
+ * Dynamic Player Count Component
+ * Fetches registered player count from API
+ */
+---
+
+<div
+  id="stat-players"
+  class="bg-black/20 p-6 rounded-2xl border border-white/5 hover:border-[#f59e0b]/30 transition-colors text-center"
+>
+  <!-- Loading -->
+  <div id="players-loading" class="animate-pulse">
+    <div
+      class="text-4xl font-black text-[#f59e0b] mb-2 drop-shadow-[0_0_10px_rgba(245,158,11,0.4)]"
+    >
+      --k+
+    </div>
+    <div
+      class="text-sm text-gray-400 uppercase tracking-wider font-bold"
+      data-i18n="about.players"
+    >
+      Jugadores
+    </div>
+  </div>
+
+  <!-- Content -->
+  <div id="players-content" class="hidden">
+    <div
+      id="players-count"
+      class="text-4xl font-black text-[#f59e0b] mb-2 drop-shadow-[0_0_10px_rgba(245,158,11,0.4)]"
+    >
+      10k+
+    </div>
+    <div
+      class="text-sm text-gray-400 uppercase tracking-wider font-bold"
+      data-i18n="about.players"
+    >
+      Jugadores
+    </div>
+  </div>
+</div>
+
+<script>
+  async function fetchPlayerCount() {
+    const loadingEl = document.getElementById("players-loading");
+    const contentEl = document.getElementById("players-content");
+    const countEl = document.getElementById("players-count");
+
+    try {
+      const response = await fetch("/api/players");
+      if (!response.ok) throw new Error("Failed to fetch player count");
+
+      const data = await response.json();
+      console.log("[PlayerCount] Data:", data);
+
+      if (countEl) {
+        // Format the count
+        const count = data.count;
+        let displayCount = "";
+
+        if (count >= 1000000) {
+          displayCount = `${(count / 1000000).toFixed(1)}M+`;
+        } else if (count >= 1000) {
+          displayCount = `${Math.floor(count / 1000)}k+`;
+        } else {
+          displayCount = `${count}+`;
+        }
+
+        countEl.textContent = displayCount;
+      }
+
+      if (loadingEl) loadingEl.classList.add("hidden");
+      if (contentEl) contentEl.classList.remove("hidden");
+    } catch (error) {
+      console.error("[PlayerCount] Error:", error);
+      
+      // Show fallback
+      if (countEl) countEl.textContent = "10k+";
+      if (loadingEl) loadingEl.classList.add("hidden");
+      if (contentEl) contentEl.classList.remove("hidden");
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    fetchPlayerCount();
+  });
+</script>

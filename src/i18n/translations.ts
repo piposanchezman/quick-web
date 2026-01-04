@@ -61,6 +61,7 @@ export const translations = {
       "Con más de 4 años de experiencia, hemos construido una comunidad sólida de miles de jugadores que confían en nosotros para sus aventuras de Minecraft. Nuestro compromiso es mantener un servidor estable, seguro y constantemente actualizado con las mejores características.",
     "about.players": "Jugadores Registrados",
     "about.uptime": "Tiempo de Actividad",
+    "about.uptimeDays": "Últimos 7 días",
     "about.years": "Años Online",
     // Rules
     "rules.title": "Reglas del Servidor",
@@ -153,6 +154,7 @@ export const translations = {
       "With over 4 years of experience, we have built a solid community of thousands of players who trust us for their Minecraft adventures. Our commitment is to maintain a stable, secure server constantly updated with the best features.",
     "about.players": "Registered Players",
     "about.uptime": "Uptime",
+    "about.uptimeDays": "Last 7 days",
     "about.years": "Years Online",
     // Rules
     "rules.title": "Server Rules",
@@ -245,6 +247,7 @@ export const translations = {
       "Com mais de 4 anos de experiência, construímos uma comunidade sólida de milhares de jogadores que confiam em nós para suas aventuras de Minecraft. Nosso compromisso é manter um servidor estável, seguro e constantemente atualizado com as melhores características.",
     "about.players": "Jogadores Registrados",
     "about.uptime": "Tempo de Atividade",
+    "about.uptimeDays": "Últimos 7 dias",
     "about.years": "Anos Online",
     // Rules
     "rules.title": "Regras do Servidor",
