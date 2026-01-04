@@ -17,6 +17,7 @@ Landing page oficial de QuickLand Network, un servidor de Minecraft en español 
 - 🎭 **Animaciones** - Animaciones suaves y modernas
 - 🔒 **SEO Optimizado** - Meta tags, Open Graph y Schema.org
 - ⚙️ **TypeScript** - Tipado estático para mejor DX
+- 📊 **Uptime Monitoring** - Integración con Uptime Robot para monitoreo en tiempo real
 
 ## 📁 Estructura del Proyecto
 
@@ -61,6 +62,25 @@ pnpm dev
 | `pnpm astro ...`  | Ejecuta comandos de Astro CLI                  |
 
 ## 🎨 Configuración
+
+### Variables de Entorno
+
+Copia el archivo `.env.example` a `.env` y configura las siguientes variables:
+
+```bash
+cp .env.example .env
+```
+
+#### Uptime Robot (Opcional)
+
+Para habilitar el monitoreo de uptime en tiempo real con barras visuales:
+
+```env
+PUBLIC_UPTIME_ROBOT_API_KEY=tu_api_key_aqui
+PUBLIC_UPTIME_ROBOT_MONITOR_ID=tu_monitor_id_aqui
+```
+
+📖 **Ver [UPTIME_ROBOT.md](UPTIME_ROBOT.md) para la guía completa de configuración**
 
 ### Configuración del Sitio
 
