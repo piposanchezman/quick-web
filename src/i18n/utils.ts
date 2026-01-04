@@ -15,3 +15,21 @@ export function getTranslations(locale: Locale) {
   }
   return trans;
 }
+
+/**
+ * Client-side helper to get current locale from DOM
+ * @returns Current locale from document.documentElement.lang
+ */
+export function getCurrentLocale(): Locale {
+  const lang = document.documentElement.lang.split('-')[0] || 'es';
+  return (lang === 'en' || lang === 'pt') ? lang : 'es';
+}
+
+/**
+ * Client-side helper to get translations for current locale
+ * @returns Translations object for current locale
+ */
+export function getClientTranslations() {
+  const locale = getCurrentLocale();
+  return translations[locale] || translations['es'];
+}
