@@ -195,6 +195,7 @@ const { apiKey, monitorId } = Astro.props;
     const recentLogs = logs.filter((log) => log.datetime >= lookbackTime);
 
     const dailyStatus: number[] = [];
+    let totalUptime = 0;
 
     for (let i = 0; i < numBars; i++) {
       const barStart = startTime + i * barDuration;
@@ -276,12 +277,12 @@ const { apiKey, monitorId } = Astro.props;
       // Calculate percentage (ensure it's between 0 and 100)
       const barUptime = Math.max(0, Math.min(100, (uptimeSeconds / barDuration) * 100));
       
-      dailyStatus.push(Math.round(barUptime));
+      dailyStatus.push(barUptime);
+      totalUptime += barUptime;
     }
 
     // Calculate overall percentage
-    const avgUptime =
-      dailyStatus.reduce((a, b) => a + b, 0) / dailyStatus.length;
+    const avgUptime = totalUptime / numBars;
 
     return { percentage: avgUptime, dailyStatus };
   }
@@ -461,21 +462,21 @@ const { apiKey, monitorId } = Astro.props;
         const height = uptime < 10 ? 10 : uptime;
         const opacity = uptime >= 95 ? 1 : 0.6;
         const label = labels[index] || '';
-        const clickableClass = isHourlyView ? 'cursor-pointer hover:scale-105' : 'cursor-default';
+        const clickableClass = isHourlyView ? 'cursor-pointer' : 'cursor-default';
         const dataAttr = isHourlyView ? `data-hour="${index}"` : '';
 
         return `
-        <div class="uptime-bar-container flex flex-col items-center justify-end gap-1 transition-all duration-200" style="flex: 1; height: 100%;">
+        <div class="uptime-bar-container flex flex-col items-center justify-end gap-1 transition-all duration-200" style="flex: 1; height: 100%; min-width: 0;">
           <div 
-            class="uptime-bar w-full rounded-t flex flex-col items-center justify-end pb-2 relative ${clickableClass}"
+            class="uptime-bar w-full rounded-t flex items-center justify-center relative ${clickableClass} hover:scale-104 hover:z-4"
             style="background-color: ${color}; height: ${height}%; opacity: ${opacity}; transition: all 0.2s ease;"
             ${dataAttr}
           >
-            <div class="uptime-percentage ${fontSize} font-bold text-white/95 leading-tight text-center opacity-0 transition-opacity">
-              ${uptime}%
+            <div class="uptime-percentage ${fontSize} font-bold text-white leading-tight text-center opacity-0 transition-opacity whitespace-nowrap bg-black/80 px-1 py-1 rounded pointer-events-none" style="writing-mode: vertical-rl; text-orientation: mixed;">
+              ${uptime.toFixed(1)}%
             </div>
           </div>
-          <div class="${labelFontSize} text-gray-400 font-semibold text-center leading-tight whitespace-nowrap">
+          <div class="${labelFontSize} text-gray-400 font-semibold text-center leading-tight whitespace-nowrap overflow-hidden text-ellipsis w-full">
             ${label}
           </div>
         </div>
@@ -533,20 +534,20 @@ const { apiKey, monitorId } = Astro.props;
       ) {
         const monitor = data.monitors[0];
 
-        // Get uptime percentage (7 days)
-        let uptimePercentage = 99.9;
-        if (monitor.custom_uptime_ratio) {
-          uptimePercentage = parseFloat(monitor.custom_uptime_ratio);
-        }
-
         // Calculate daily status from logs
-        const { dailyStatus } = monitor.logs
+        const { percentage, dailyStatus } = monitor.logs
           ? calculateUptimeFromLogs(monitor.logs, days)
-          : { dailyStatus: Array(days === 1 ? 24 : days >= 365 ? 12 : Math.min(days, 30)).fill(100) };
+          : { 
+              percentage: 99.9,
+              dailyStatus: Array(days === 1 ? 24 : days >= 365 ? 12 : Math.min(days, 30)).fill(100) 
+            };
+
+        // Use calculated percentage for the selected period
+        const uptimePercentage = percentage;
 
         // Update UI
         if (percentageEl) {
-          percentageEl.textContent = `${uptimePercentage}%`;
+          percentageEl.textContent = `${uptimePercentage.toFixed(2)}%`;
           const color = getUptimeColor(uptimePercentage);
           percentageEl.style.color = color;
           percentageEl.style.textShadow = `0 0 10px ${color}40`;
@@ -639,6 +640,9 @@ const { apiKey, monitorId } = Astro.props;
         const period = parseInt(btn.getAttribute('data-period') || '1');
         currentPeriod = period;
         
+        // Reset detail view when changing periods
+        detailView = null;
+        
         // Update active state
         periodButtons.forEach(b => {
           b.classList.remove('active', 'bg-[#33cccc]/20', 'text-[#33cccc]', 'border-[#33cccc]/30');
@@ -671,11 +675,8 @@ const { apiKey, monitorId } = Astro.props;
     document.addEventListener('mouseover', (e) => {
       const bar = (e.target as HTMLElement).closest('.uptime-bar');
       if (bar) {
-        const container = bar.closest('.uptime-bar-container');
         const percentage = bar.querySelector('.uptime-percentage');
-        
-        if (container && percentage) {
-          (container as HTMLElement).style.flex = '1.5';
+        if (percentage) {
           (percentage as HTMLElement).style.opacity = '1';
         }
       }
@@ -684,11 +685,8 @@ const { apiKey, monitorId } = Astro.props;
     document.addEventListener('mouseout', (e) => {
       const bar = (e.target as HTMLElement).closest('.uptime-bar');
       if (bar) {
-        const container = bar.closest('.uptime-bar-container');
         const percentage = bar.querySelector('.uptime-percentage');
-        
-        if (container && percentage) {
-          (container as HTMLElement).style.flex = '1';
+        if (percentage) {
           (percentage as HTMLElement).style.opacity = '0';
         }
       }
