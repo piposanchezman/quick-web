@@ -26,6 +26,7 @@ export const GET: APIRoute = async ({ request, url }) => {
     }
 
     // Fetch from Uptime Robot API (server-side, no CORS issues)
+    // Always request all periods (1-7-30-365) and logs for detailed calculation
     const response = await fetch('https://api.uptimerobot.com/v2/getMonitors', {
       method: 'POST',
       headers: {
@@ -34,9 +35,9 @@ export const GET: APIRoute = async ({ request, url }) => {
       body: new URLSearchParams({
         api_key: apiKey,
         monitors: monitorId,
-        custom_uptime_ratios: days.toString(),
+        custom_uptime_ratios: '1-7-30-365',
         logs: '1',
-        logs_limit: Math.min(days * 10, 500).toString(), // More logs for longer periods
+        logs_limit: '100',
       }),
     });
 
@@ -46,18 +47,35 @@ export const GET: APIRoute = async ({ request, url }) => {
 
     const data = await response.json();
 
-    // Return the data with cache headers
+    // Check for rate limit errors from Uptime Robot API
+    if (data.stat === 'fail' && data.error) {
+      console.error('[API /api/uptime] Uptime Robot API error:', data.error);
+      return new Response(JSON.stringify({
+        error: data.error.message || 'API error',
+        fallback: true,
+      }), {
+        status: 429,
+        headers: {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'public, max-age=300',
+          'Retry-After': '300'
+        },
+      });
+    }
+
+    // Return the data with 5-minute cache to respect rate limits
+    // Uptime Robot free tier: 10 requests per minute
     return new Response(JSON.stringify(data), {
       status: 200,
       headers: {
         'Content-Type': 'application/json',
-        'Cache-Control': 'public, max-age=60', 
+        'Cache-Control': 'public, max-age=300, stale-while-revalidate=60',
       },
     });
   } catch (error) {
     console.error('[API /api/uptime] Error:', error);
 
-    // Return error response
+    // Return error response with cache to avoid hammering the API
     return new Response(
       JSON.stringify({
         error: error instanceof Error ? error.message : 'Unknown error',
@@ -67,6 +85,7 @@ export const GET: APIRoute = async ({ request, url }) => {
         status: 500,
         headers: {
           'Content-Type': 'application/json',
+          'Cache-Control': 'public, max-age=60',
         },
       }
     );

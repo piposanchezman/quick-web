@@ -84,6 +84,12 @@ export const translations = {
     "about.months.oct": "Oct",
     "about.months.nov": "Nov",
     "about.months.dec": "Dic",
+    "about.monitoring.since": "Monitoreo desde el",
+    "about.monitoring.noData": "Sin datos de monitoreo",
+    "about.time.days": "días",
+    "about.time.day": "día",
+    "about.time.hours": "h",
+    "about.time.minutes": "min",
     // Rules
     "rules.title": "Reglas del Servidor",
     "rules.intro":
@@ -220,6 +226,12 @@ export const translations = {
     "about.months.oct": "Oct",
     "about.months.nov": "Nov",
     "about.months.dec": "Dec",
+    "about.monitoring.since": "Monitoring since",
+    "about.monitoring.noData": "No monitoring data",
+    "about.time.days": "days",
+    "about.time.day": "day",
+    "about.time.hours": "h",
+    "about.time.minutes": "min",
     // Rules
     "rules.title": "Server Rules",
     "rules.intro":
@@ -354,6 +366,12 @@ export const translations = {
     "about.months.oct": "Out",
     "about.months.nov": "Nov",
     "about.months.dec": "Dez",
+    "about.monitoring.since": "Monitoramento desde",
+    "about.monitoring.noData": "Sem dados de monitoramento",
+    "about.time.days": "dias",
+    "about.time.day": "dia",
+    "about.time.hours": "h",
+    "about.time.minutes": "min",
     // Rules
     "rules.title": "Regras do Servidor",
     "rules.intro":
