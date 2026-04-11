@@ -76,8 +76,8 @@ cp .env.example .env
 Para habilitar el monitoreo de uptime en tiempo real con barras visuales:
 
 ```env
-PUBLIC_UPTIME_ROBOT_API_KEY=tu_api_key_aqui
-PUBLIC_UPTIME_ROBOT_MONITOR_ID=tu_monitor_id_aqui
+UPTIME_ROBOT_API_KEY=tu_api_key_aqui
+UPTIME_ROBOT_MONITOR_ID=tu_monitor_id_aqui
 ```
 
 📖 **Ver [UPTIME_ROBOT.md](UPTIME_ROBOT.md) para la guía completa de configuración**

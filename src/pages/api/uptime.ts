@@ -2,8 +2,8 @@ import type { APIRoute } from 'astro';
 
 export const GET: APIRoute = async ({ request, url }) => {
   try {
-    const apiKey = import.meta.env.PUBLIC_UPTIME_ROBOT_API_KEY;
-    const monitorId = import.meta.env.PUBLIC_UPTIME_ROBOT_MONITOR_ID;
+    const apiKey = import.meta.env.UPTIME_ROBOT_API_KEY;
+    const monitorId = import.meta.env.UPTIME_ROBOT_MONITOR_ID;
 
     // Get days parameter from query string (default to 7)
     const days = parseInt(url.searchParams.get('days') || '7');
