@@ -61,8 +61,8 @@ export const GET: APIRoute = async ({ request }) => {
 
     return new Response(
       JSON.stringify({
-        error: 'Database error',
-        message: error instanceof Error ? error.message : 'Unknown error',
+        error: 'Internal service configuration failure',
+        message: 'Internal service configuration failure',
       }),
       {
         status: 500,
