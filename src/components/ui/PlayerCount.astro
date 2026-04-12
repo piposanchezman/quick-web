@@ -70,7 +70,7 @@
       if (loadingEl) loadingEl.classList.add("hidden");
       if (contentEl) contentEl.classList.remove("hidden");
     } catch (error) {
-      console.error("[PlayerCount] Error:", error);
+      console.warn("[PlayerCount] Fetch failed, using fallback player count.");
       
       // Show fallback
       if (countEl) countEl.textContent = "10k+";

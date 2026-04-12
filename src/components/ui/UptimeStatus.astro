@@ -566,7 +566,7 @@ const { apiKey, monitorId } = Astro.props;
         updateDisplay(data);
       }
     } catch (error) {
-      console.error("[UptimeStatus] Error:", error);
+      console.warn("[UptimeStatus] Fetch failed, using fallback data.");
       if (cachedData) {
         console.log('[UptimeStatus] Falling back to cached data');
         updateDisplay(cachedData);
