@@ -1,4 +1,5 @@
 import type { APIRoute } from 'astro';
+import { getDbPool } from '../../lib/db';
 
 /**
  * API endpoint to get registered players count
@@ -13,21 +14,11 @@ export const GET: APIRoute = async ({ request }) => {
     const dbPass = import.meta.env.JPREMIUM_DB_PASS;
 
     if (dbHost && dbName && dbUser && dbPass) {
-      const mysql = await import('mysql2/promise');
-      
-      const connection = await mysql.createConnection({
-        host: dbHost,
-        port: parseInt(dbPort || '3306'),
-        database: dbName,
-        user: dbUser,
-        password: dbPass,
-      });
+      const pool = getDbPool();
 
-      const [rows] = await connection.execute(
+      const [rows] = await pool.execute(
         'SELECT COUNT(DISTINCT lastAddress) as count FROM user_profiles'
       ) as any;
-
-      await connection.end();
 
       return new Response(
         JSON.stringify({
