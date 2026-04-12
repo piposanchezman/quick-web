@@ -44,7 +44,7 @@ export const GET: APIRoute = async ({ request }) => {
       JSON.stringify({
         years: 5,
         source: 'fallback',
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: 'Internal service configuration failure',
       }),
       {
         status: 200,

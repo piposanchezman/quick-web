@@ -51,7 +51,7 @@ export const GET: APIRoute = async ({ request, url }) => {
     if (data.stat === 'fail' && data.error) {
       console.error('[API /api/uptime] Uptime Robot API error:', data.error);
       return new Response(JSON.stringify({
-        error: data.error.message || 'API error',
+        error: 'Internal service configuration failure',
         fallback: true,
       }), {
         status: 429,
@@ -78,7 +78,7 @@ export const GET: APIRoute = async ({ request, url }) => {
     // Return error response with cache to avoid hammering the API
     return new Response(
       JSON.stringify({
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: 'Internal service configuration failure',
         fallback: true,
       }),
       {
