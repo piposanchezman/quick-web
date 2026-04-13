@@ -18,7 +18,7 @@ function isAllowedOrigin(request: Request) {
 }
 
 /**
- * API endpoint to get registered players count connecting to jPremium database
+ * API endpoint to get registered users count connecting to jPremium database
  */
 export const GET: APIRoute = async ({ request }) => {
   // 1. Bloqueo de peticiones externas no autorizadas
@@ -88,7 +88,7 @@ export const GET: APIRoute = async ({ request }) => {
       { status: 503, headers: { 'Content-Type': 'application/json' } }
     );
   } catch (error) {
-    console.error('[API /api/players] Error:', error);
+    console.error('[API /api/users] Error:', error);
 
     // 4. Fallback de emergencia, regresar valor cacheado previo si la BDD se cae
     if (memoryCache) {

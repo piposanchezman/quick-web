@@ -1,16 +1,16 @@
 ---
 /**
- * Dynamic Player Count Component
- * Fetches registered player count from API
+ * Dynamic User Count Component
+ * Fetches registered user count from API
  */
 ---
 
 <div
-  id="stat-players"
+  id="stat-users"
   class="bg-black/20 p-6 rounded-2xl border border-white/5 hover:border-[#f59e0b]/30 transition-colors text-center"
 >
   <!-- Loading -->
-  <div id="players-loading" class="animate-pulse">
+  <div id="users-loading" class="animate-pulse">
     <div
       class="text-4xl font-black text-[#f59e0b] mb-2 drop-shadow-[0_0_10px_rgba(245,158,11,0.4)]"
     >
@@ -18,36 +18,36 @@
     </div>
     <div
       class="text-sm text-gray-400 uppercase tracking-wider font-bold"
-      data-i18n="about.players"
+      data-i18n="about.users"
     >
     </div>
   </div>
 
   <!-- Content -->
-  <div id="players-content" class="hidden">
+  <div id="users-content" class="hidden">
     <div
-      id="players-count"
+      id="users-count"
       class="text-4xl font-black text-[#f59e0b] mb-2 drop-shadow-[0_0_10px_rgba(245,158,11,0.4)]"
     >
       10k+
     </div>
     <div
       class="text-sm text-gray-400 uppercase tracking-wider font-bold"
-      data-i18n="about.players"
+      data-i18n="about.users"
     >
     </div>
   </div>
 </div>
 
 <script>
-  async function fetchPlayerCount() {
-    const loadingEl = document.getElementById("players-loading");
-    const contentEl = document.getElementById("players-content");
-    const countEl = document.getElementById("players-count");
+  async function fetchUserCount() {
+    const loadingEl = document.getElementById("users-loading");
+    const contentEl = document.getElementById("users-content");
+    const countEl = document.getElementById("users-count");
 
     try {
-      const response = await fetch("/api/players");
-      if (!response.ok) throw new Error("Failed to fetch player count");
+      const response = await fetch("/api/users");
+      if (!response.ok) throw new Error("Failed to fetch user count");
 
       const data = await response.json();
 
@@ -70,7 +70,7 @@
       if (loadingEl) loadingEl.classList.add("hidden");
       if (contentEl) contentEl.classList.remove("hidden");
     } catch (error) {
-      console.warn("[PlayerCount] Fetch failed, using fallback player count.");
+      console.warn("[UserCount] Fetch failed, using fallback user count.");
       
       // Show fallback
       if (countEl) countEl.textContent = "10k+";
@@ -80,6 +80,6 @@
   }
 
   document.addEventListener("DOMContentLoaded", () => {
-    fetchPlayerCount();
+    fetchUserCount();
   });
 </script>
