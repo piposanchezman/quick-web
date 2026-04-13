@@ -1,38 +1,59 @@
 import type { APIRoute } from 'astro';
 
+// CACHÉ EN MEMORIA: Evita saturar la API de UptimeRobot y protege de bloqueos.
+let memoryCache: { data: any, timestamp: number } | null = null;
+const CACHE_DURATION_MS = 5 * 60 * 1000; // 5 minutos guardados en RAM del servidor
+
+// VALIDACIÓN DE ORIGEN: Protege que otros sitios no consuman nuestra API
+function isAllowedOrigin(request: Request) {
+  if (!import.meta.env.PROD) return true; // En modo local permitir siempre
+  const referer = request.headers.get('referer') || '';
+  const origin = request.headers.get('origin') || '';
+  const host = request.headers.get('host') || '';
+  
+  if (!host) return true;
+  return referer.includes(host) || origin.includes(host);
+}
+
 export const GET: APIRoute = async ({ request, url }) => {
+  // 1. Bloquear accesos desde bots externos o iframes ajenos
+  if (!isAllowedOrigin(request)) {
+    return new Response(JSON.stringify({ error: 'Origin not allowed' }), { 
+      status: 403, 
+      headers: { 'Content-Type': 'application/json' } 
+    });
+  }
+
+  // 2. Comprobar Caché, si es válido regresarlo AL INSTANTE
+  const now = Date.now();
+  if (memoryCache && (now - memoryCache.timestamp) < CACHE_DURATION_MS) {
+    return new Response(JSON.stringify(memoryCache.data), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'Cache-Control': 'public, max-age=300', // Caché de navegador
+      },
+    });
+  }
+
   try {
     const apiKey = import.meta.env.UPTIME_ROBOT_API_KEY;
     const monitorId = import.meta.env.UPTIME_ROBOT_MONITOR_ID;
 
-    // Get days parameter from query string (default to 7)
-    const rawDays = url.searchParams.get('days');
-    const days = rawDays ? (parseInt(rawDays, 10) || 7) : 7;
-
-    // Validate credentials
     if (!apiKey || !monitorId) {
       return new Response(
-        JSON.stringify({
-          error: 'Uptime Robot credentials not configured',
-          fallback: true,
-        }),
-        {
-          status: 200,
-          headers: {
-            'Content-Type': 'application/json',
-            'Cache-Control': 'public, max-age=60', 
-          },
-        }
+        JSON.stringify({ error: 'Uptime Robot credentials not configured', fallback: true }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } }
       );
     }
 
-    // Fetch from Uptime Robot API (server-side, no CORS issues)
-    // Always request all periods (1-7-30-365) and logs for detailed calculation
+    // 3. TIMEOUT DE FETCH: Cancelar petición externa si se queda colgada (Protege la RAM)
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 6000); // 6 segundos de tope
+
     const response = await fetch('https://api.uptimerobot.com/v2/getMonitors', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({
         api_key: apiKey,
         monitors: monitorId,
@@ -40,32 +61,26 @@ export const GET: APIRoute = async ({ request, url }) => {
         logs: '1',
         logs_limit: '100',
       }),
+      signal: controller.signal // Límite de tiempo aplicado a fetch
     });
 
-    if (!response.ok) {
-      throw new Error(`Uptime Robot API error: ${response.status}`);
-    }
+    clearTimeout(timeoutId); // Limpiar timer
+
+    if (!response.ok) throw new Error(`Uptime Robot API error: ${response.status}`);
 
     const data = await response.json();
 
-    // Check for rate limit errors from Uptime Robot API
     if (data.stat === 'fail' && data.error) {
-      console.error('[API /api/uptime] Uptime Robot API error:', data.error);
-      return new Response(JSON.stringify({
-        error: 'Internal service configuration failure',
-        fallback: true,
-      }), {
+      console.warn('[API /api/uptime] Uptime Robot API error:', data.error);
+      return new Response(JSON.stringify({ error: 'Internal limit', fallback: true }), {
         status: 429,
-        headers: {
-          'Content-Type': 'application/json',
-          'Cache-Control': 'public, max-age=300',
-          'Retry-After': '300'
-        },
+        headers: { 'Content-Type': 'application/json', 'Retry-After': '300' },
       });
     }
 
-    // Return the data with 5-minute cache to respect rate limits
-    // Uptime Robot free tier: 10 requests per minute
+    // GUARDAR EN CACHÉ antes de enviar al usuario
+    memoryCache = { data, timestamp: now };
+
     return new Response(JSON.stringify(data), {
       status: 200,
       headers: {
@@ -74,21 +89,20 @@ export const GET: APIRoute = async ({ request, url }) => {
       },
     });
   } catch (error) {
-    console.error('[API /api/uptime] Error:', error);
+    console.error('[API /api/uptime] Fetch Error:', error);
 
-    // Return error response with cache to avoid hammering the API
+    // MEGA-FALLBACK: Si UptimeRobot está muerto hace horas, seguimos enviando 
+    // la última caché viva que tuvo Node en lugar del aviso de error.
+    if (memoryCache) {
+      return new Response(JSON.stringify(memoryCache.data), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' } 
+      });
+    }
+
     return new Response(
-      JSON.stringify({
-        error: 'Internal service configuration failure',
-        fallback: true,
-      }),
-      {
-        status: 500,
-        headers: {
-          'Content-Type': 'application/json',
-          'Cache-Control': 'public, max-age=60',
-        },
-      }
+      JSON.stringify({ error: 'Internal service failure', fallback: true }),
+      { status: 500, headers: { 'Content-Type': 'application/json' } }
     );
   }
 };
