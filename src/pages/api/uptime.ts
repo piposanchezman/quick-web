@@ -6,7 +6,8 @@ export const GET: APIRoute = async ({ request, url }) => {
     const monitorId = import.meta.env.UPTIME_ROBOT_MONITOR_ID;
 
     // Get days parameter from query string (default to 7)
-    const days = parseInt(url.searchParams.get('days') || '7');
+    const rawDays = url.searchParams.get('days');
+    const days = rawDays ? (parseInt(rawDays, 10) || 7) : 7;
 
     // Validate credentials
     if (!apiKey || !monitorId) {
