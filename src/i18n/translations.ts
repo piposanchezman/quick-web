@@ -22,10 +22,10 @@ export const translations = {
     // Features
     "features.title": "¿Por qué elegir QuickLand?",
     "features.subtitle":
-      "QuickLand es una red de servidores con múltiples modalidades como Survival, FFA, Clanes y más. ¡Explora, compite, comercia y crea a tu manera!",
+      "QuickLand es una red de servidores con múltiples modalidades como Survival, PvP y más. ¡Explora, compite, comercia y crea a tu manera!",
     "features.modes.title": "Múltiples Modalidades",
     "features.modes.desc":
-      "Disfruta de modos como Survival, FFA Clans y más, cada uno con sus propias reglas y mecánicas.",
+      "Disfruta de modos como Survival, QuickPvP y más, cada uno con sus propias reglas y mecánicas.",
     "features.economy.title": "Economía Dinámica",
     "features.economy.desc":
       "Sistema económico balanceado que se adapta a cada modalidad. Comercia, crea tiendas y crece.",
@@ -48,9 +48,6 @@ export const translations = {
     "gamemodes.survival.title": "Survival 1.12.2",
     "gamemodes.survival.desc":
       "El clásico survival con protecciones, economía, trabajos y eventos especiales. La experiencia completa de Minecraft.",
-    "gamemodes.ffa.title": "FFA Clans",
-    "gamemodes.ffa.desc":
-      "PvP libre con sistema de clanes. Forma tu equipo, domina el mapa y demuestra quién es el mejor.",
     "gamemodes.pvp.title": "QuickPvP",
     "gamemodes.pvp.desc":
       "Crystal PvP competitivo. Domina el arte del End Crystal y conquista la arena de combate.",
@@ -136,10 +133,10 @@ export const translations = {
     "footer.ipBedrock": "IP Bedrock",
     "footer.serverVersions": "1.8 - 1.21+",
     "footer.copyright":
-      "© 2020-2025 QuickLand Network. Todos los derechos reservados.",
+      "© 2020-2026 QuickLand Network. Todos los derechos reservados.",
     "footer.disclaimer":
       "Minecraft es una marca registrada de Mojang Studios. Este servidor no está afiliado con Mojang Studios.",
-    "footer.madeWith": "Desarrollado con ❤️ para la comunidad de Minecraft",
+    "footer.madeW6th": "Desarrollado con ❤️ para la comunidad de Minecraft",
   },
   en: {
     // Navigation
@@ -164,10 +161,10 @@ export const translations = {
     // Features
     "features.title": "Why Choose QuickLand?",
     "features.subtitle":
-      "QuickLand is a server network with multiple game modes like Survival, FFA, Clans and more. Explore, compete, trade and create your way!",
+      "QuickLand is a server network with multiple game modes like Survival, PvP and more. Explore, compete, trade and create your way!",
     "features.modes.title": "Multiple Game Modes",
     "features.modes.desc":
-      "Enjoy modes like Survival, FFA Clans and more, each with its own rules and mechanics.",
+      "Enjoy modes like Survival, QuickPvP and more, each with its own rules and mechanics.",
     "features.economy.title": "Dynamic Economy",
     "features.economy.desc":
       "Balanced economic system that adapts to each game mode. Trade, create shops and grow.",
@@ -190,9 +187,6 @@ export const translations = {
     "gamemodes.survival.title": "Survival 1.12.2",
     "gamemodes.survival.desc":
       "Classic survival with protections, economy, jobs and special events. The complete Minecraft experience.",
-    "gamemodes.ffa.title": "FFA Clans",
-    "gamemodes.ffa.desc":
-      "Free PvP with clan system. Build your team, dominate the map and prove who is the best.",
     "gamemodes.pvp.title": "QuickPvP",
     "gamemodes.pvp.desc":
       "Competitive Crystal PvP. Master the art of End Crystal and conquer the combat arena.",
@@ -276,10 +270,10 @@ export const translations = {
     "footer.ipBedrock": "Bedrock IP",
     "footer.serverVersions": "1.8 - 1.21+",
     "footer.copyright":
-      "© 2020-2025 QuickLand Network. All rights reserved.",
+      "© 2020-2026 QuickLand Network. All rights reserved.",
     "footer.disclaimer":
       "Minecraft is a trademark of Mojang Studios. This server is not affiliated with Mojang Studios.",
-    "footer.madeWith": "Made with ❤️ for the Minecraft community",
+    "footer.madeW6th": "Made with ❤️ for the Minecraft community",
   },
   pt: {
     // Navigation
@@ -304,10 +298,10 @@ export const translations = {
     // Features
     "features.title": "Por que escolher QuickLand?",
     "features.subtitle":
-      "QuickLand é uma rede de servidores com múltiplas modalidades como Survival, FFA, Clãs e mais. Explore, compita, negocie e crie do seu jeito!",
+      "QuickLand é uma rede de servidores com múltiplas modalidades como Survival, PvP e mais. Explore, compita, negocie e crie do seu jeito!",
     "features.modes.title": "Múltiplas Modalidades",
     "features.modes.desc":
-      "Aproveite modos como Survival, FFA Clans e mais, cada um com suas próprias regras e mecânicas.",
+      "Aproveite modos como Survival, QuickPvP e mais, cada um com suas próprias regras e mecânicas.",
     "features.economy.title": "Economia Dinâmica",
     "features.economy.desc":
       "Sistema econômico equilibrado que se adapta a cada modalidade. Negocie, crie lojas e cresça.",
@@ -330,9 +324,6 @@ export const translations = {
     "gamemodes.survival.title": "Survival 1.12.2",
     "gamemodes.survival.desc":
       "O clássico survival com proteções, economia, empregos e eventos especiais. A experiência completa do Minecraft.",
-    "gamemodes.ffa.title": "FFA Clans",
-    "gamemodes.ffa.desc":
-      "PvP livre com sistema de clãs. Monte sua equipe, domine o mapa e prove quem é o melhor.",
     "gamemodes.pvp.title": "QuickPvP",
     "gamemodes.pvp.desc":
       "Crystal PvP competitivo. Domine a arte do End Crystal e conquiste a arena de combate.",
@@ -416,10 +407,10 @@ export const translations = {
     "footer.ipBedrock": "IP Bedrock",
     "footer.serverVersions": "1.8 - 1.21+",
     "footer.copyright":
-      "© 2020-2025 QuickLand Network. Todos os direitos reservados.",
+      "© 2020-2026 QuickLand Network. Todos os direitos reservados.",
     "footer.disclaimer":
       "Minecraft é uma marca registrada da Mojang Studios. Este servidor não é afiliado à Mojang Studios.",
-    "footer.madeWith": "Desenvolvido com ❤️ para a comunidade de Minecraft",
+    "footer.madeW6th": "Desenvolvido com ❤️ para a comunidade de Minecraft",
   },
 };
 
