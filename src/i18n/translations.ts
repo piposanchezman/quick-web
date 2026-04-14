@@ -62,7 +62,7 @@ export const translations = {
       "QuickLand Network nació en 2020 con la visión de crear el mejor servidor de Minecraft en español. Somos un equipo apasionado de desarrolladores y gamers que entiende lo que los jugadores realmente quieren: una experiencia auténtica, justa y divertida.",
     "about.p2":
       "Con más de 4 años de experiencia, hemos construido una comunidad sólida de miles de jugadores que confían en nosotros para sus aventuras de Minecraft. Nuestro compromiso es mantener un servidor estable, seguro y constantemente actualizado con las mejores características.",
-    "about.players": "Jugadores Registrados",
+    "about.users": "Usuarios Registrados",
     "about.uptime": "Tiempo de Actividad",
     "about.uptimeDays": "Últimos 7 días",
     "about.years": "Años Online",
@@ -204,7 +204,7 @@ export const translations = {
       "QuickLand Network was born in 2020 with the vision of creating the best Spanish-speaking Minecraft server. We are a passionate team of developers and gamers who understand what players really want: an authentic, fair and fun experience.",
     "about.p2":
       "With over 4 years of experience, we have built a solid community of thousands of players who trust us for their Minecraft adventures. Our commitment is to maintain a stable, secure server constantly updated with the best features.",
-    "about.players": "Registered Players",
+    "about.users": "Registered Users",
     "about.uptime": "Uptime",
     "about.uptimeDays": "Last 7 days",
     "about.years": "Years Online",
@@ -344,7 +344,7 @@ export const translations = {
       "QuickLand Network nasceu em 2020 com a visão de criar o melhor servidor de Minecraft em espanhol. Somos uma equipe apaixonada de desenvolvedores e gamers que entende o que os jogadores realmente querem: uma experiência autêntica, justa e divertida.",
     "about.p2":
       "Com mais de 4 anos de experiência, construímos uma comunidade sólida de milhares de jogadores que confiam em nós para suas aventuras de Minecraft. Nosso compromisso é manter um servidor estável, seguro e constantemente atualizado com as melhores características.",
-    "about.players": "Jogadores Registrados",
+    "about.users": "Usuários Registrados",
     "about.uptime": "Tempo de Atividade",
     "about.uptimeDays": "Últimos 7 dias",
     "about.years": "Anos Online",

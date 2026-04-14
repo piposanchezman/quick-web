@@ -1,6 +1,6 @@
 ---
 import UptimeStatus from "../ui/UptimeStatus.astro";
-import PlayerCount from "../ui/PlayerCount.astro";
+import UserCount from "../ui/UserCount.astro";
 import ServerAge from "../ui/ServerAge.astro";
 
 interface Props {
@@ -58,7 +58,7 @@ const { translations: t } = Astro.props;
           <UptimeStatus />
           <!-- Row 2 - Players and Years in same row -->
           <div class="grid grid-cols-2 gap-6">
-            <PlayerCount />
+            <UserCount />
             <ServerAge />
           </div>
         </div>

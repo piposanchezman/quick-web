@@ -97,13 +97,6 @@ const { apiKey, monitorId } = Astro.props;
     <div class="text-[10px] text-gray-600 text-center mt-1">
       <span data-i18n="about.timezone"></span>: <span id="timezone-label">--</span>
     </div>
-    <!-- Monitoring age warning -->
-    <div id="monitoring-warning" class="hidden text-xs text-yellow-400/80 text-center mt-2 flex items-center justify-center gap-1">
-      <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
-      </svg>
-      <span id="monitoring-warning-text"></span>
-    </div>
   </div>
 
   <!-- Error State -->
@@ -298,15 +291,27 @@ const { apiKey, monitorId } = Astro.props;
   function calculateHourlyUptime(
     logs: Array<{ type: number; datetime: number; duration: number }>
   ): number[] {
+    const rawNow = new Date();
+    const currentHourDate = new Date(rawNow.getFullYear(), rawNow.getMonth(), rawNow.getDate(), rawNow.getHours(), 0, 0);
+    // Start exactly 23 hours ago from the start of the current hour
+    const startTimeMs = currentHourDate.getTime() - (23 * 60 * 60 * 1000);
+    const startTime = startTimeMs / 1000;
     const now = Date.now() / 1000;
-    const startTime = now - (24 * 60 * 60);
+    
     const lookbackLogs = logs.filter(log => log.datetime >= startTime - (24 * 60 * 60));
     const hourlyStatus: number[] = [];
 
     for (let i = 0; i < 24; i++) {
       const barStart = startTime + (i * 3600);
-      const barEnd = barStart + 3600;
-      let uptimeSeconds = 3600;
+      const barEnd = Math.min(barStart + 3600, now);
+      const currentBarDuration = barEnd - barStart;
+
+      if (currentBarDuration <= 0) {
+        hourlyStatus.push(100);
+        continue;
+      }
+
+      let uptimeSeconds = currentBarDuration;
 
       // Check for carry-over downtime from before this bar
       const lastDown = [...lookbackLogs].reverse().find(
@@ -350,25 +355,20 @@ const { apiKey, monitorId } = Astro.props;
         }
       }
 
-      hourlyStatus.push(Math.max(0, Math.min(100, (uptimeSeconds / 3600) * 100)));
+      hourlyStatus.push(Math.max(0, Math.min(100, (uptimeSeconds / currentBarDuration) * 100)));
     }
 
     return hourlyStatus;
   }
 
-  // Get color based on uptime percentage
+  // Get color based on uptime percentage (Subtle Semantic Gradient)
   function getUptimeColor(percentage: number): string {
-    if (percentage >= 100) return "#33CCCC"; // Cyan base - 100%
-    if (percentage >= 90) return "#41BDBD";
-    if (percentage >= 80) return "#4FAEAE";
-    if (percentage >= 70) return "#5D9F9F";
-    if (percentage >= 60) return "#6B9090";
-    if (percentage >= 50) return "#7A7A7A"; // Punto medio neutro
-    if (percentage >= 40) return "#896363";
-    if (percentage >= 30) return "#974C4C";
-    if (percentage >= 20) return "#A53535";
-    if (percentage >= 10) return "#B31E1E";
-    return "#DD4444"; // Rojo final
+    if (percentage >= 98.0) return "#33CCCC"; // Cian brillante (Óptimo)
+    if (percentage >= 96.0) return "#41BDBD"; // Cian ligeramente apagado
+    if (percentage >= 94.0) return "#7CA8A8"; // Turquesa grisáceo (Transición neutra)
+    if (percentage >= 92.0) return "#D4B856"; // Dorado/Amarillo suave (Advertencia temprana)
+    if (percentage >= 90.0) return "#D97B43"; // Naranja terroso (Afectación notable)
+    return "#CC5252"; // Rojo coral (Crítico < 90%)
   }
 
   // Create visualization bars
@@ -412,7 +412,7 @@ const { apiKey, monitorId } = Astro.props;
           const noDataText = getI18n('about.monitoring.noData');
           
           html += `
-            <div class="flex flex-col items-center justify-end gap-1" style="flex: 1; height: 100%; min-width: 0;">
+            <div class="flex flex-col items-center justify-end gap-1 uptime-bar-wrapper" style="flex: 10; height: 100%; min-width: 0; transition: flex 0.2s ease-out;">
               <div 
                 class="w-full rounded-t flex items-center justify-center relative"
                 style="background-color: #333; height: 10%; opacity: 0.3;"
@@ -428,17 +428,27 @@ const { apiKey, monitorId } = Astro.props;
           const color = getUptimeColor(uptime);
           const height = Math.max(uptime, 10);
           const opacity = uptime >= 95 ? 1 : 0.6;
+          const isCurrent = index === numBars - 1;
+
+          // Apply pattern directly to background to ensure it renders perfectly
+          const bgStyle = isCurrent 
+            ? `background: repeating-linear-gradient(-45deg, rgba(0,0,0,0.15), rgba(0,0,0,0.15) 3px, transparent 3px, transparent 6px), ${color};`
+            : `background-color: ${color};`;
+
+          const formattedUptime = parseFloat(uptime.toFixed(2)).toString() + "%";
 
           html += `
-            <div class="flex flex-col items-center justify-end gap-1 uptime-bar-wrapper" style="flex: 1; height: 100%; min-width: 0;">
+            <div class="flex flex-col items-center justify-end gap-1 uptime-bar-wrapper" style="flex: 10; height: 100%; min-width: 0; transition: flex 0.2s ease-out;">
               <div 
-                class="w-full rounded-t flex items-center justify-center relative transition-all duration-200 cursor-pointer uptime-bar"
-                style="background-color: ${color}; height: ${height}%; opacity: ${opacity};"
+                class="w-full rounded-t flex items-center justify-center relative transition-all duration-200 cursor-pointer uptime-bar hover:brightness-125"
+                style="${bgStyle} height: ${height}%; opacity: ${opacity};"
                 data-uptime="${uptime.toFixed(2)}"
               >
-                <span class="text-[10px] font-bold text-white opacity-0 transition-opacity duration-200 bg-black/60 px-1 py-1 rounded whitespace-nowrap uptime-tooltip" style="writing-mode: vertical-rl;">
-                  ${uptime.toFixed(2)}%
-                </span>
+                <div class="uptime-tooltip absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-0 transition-all duration-200 pointer-events-none z-50 flex flex-col items-center scale-95">
+                  <div class="bg-[#1a1a1a]/90 backdrop-blur-sm border border-white/10 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-sm shadow-xl whitespace-nowrap">
+                    ${formattedUptime}
+                  </div>
+                </div>
               </div>
               <div class="text-[8px] text-gray-400 font-semibold text-center leading-tight whitespace-nowrap overflow-hidden text-ellipsis w-full">
                 ${label}
@@ -462,15 +472,14 @@ const { apiKey, monitorId } = Astro.props;
     const now = new Date();
 
     if (period === 1) {
-      // For 24h: show exact hour:minute for all bars
-      const currentTime = now.getTime();
-      const startTime = currentTime - (24 * 60 * 60 * 1000); // 24 hours ago
+      // For 24h: align to clock hours
+      const currentHourDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours(), 0, 0);
+      const startTime = currentHourDate.getTime() - (23 * 60 * 60 * 1000); // 23 hours ago from current hour
       
       for (let i = 0; i < 24; i++) {
         const barTime = new Date(startTime + (i * 60 * 60 * 1000));
         const hour = barTime.getHours();
-        const minutes = barTime.getMinutes();
-        labels.push(`${hour.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`);
+        labels.push(`${hour.toString().padStart(2, '0')}:00`);
       }
     } else if (period <= 30) {
       const numBars = Math.min(period, 30);
@@ -613,7 +622,8 @@ const { apiKey, monitorId } = Astro.props;
 
     // Update percentage display
     if (percentageEl) {
-      percentageEl.textContent = `${current.percentage.toFixed(3)}%`;
+      const formattedPercentage = parseFloat(current.percentage.toFixed(2)).toString();
+      percentageEl.textContent = `${formattedPercentage}%`;
       const color = getUptimeColor(current.percentage);
       percentageEl.style.color = color;
       percentageEl.style.textShadow = `0 0 10px ${color}40`;
@@ -622,21 +632,6 @@ const { apiKey, monitorId } = Astro.props;
     // Update bars
     if (barsEl) {
       barsEl.innerHTML = createUptimeBars(barValues, currentPeriod);
-    }
-
-    // Show warning if period is incomplete
-    if (warningEl && warningTextEl) {
-      if (!current.isComplete) {
-        const startDate = getMonitoringStartDate(monitor.create_datetime);
-        const exactTime = getExactTimeSinceStart(monitor.create_datetime);
-        // @ts-ignore
-        const getI18n = window.getI18n || ((key: string) => key);
-        const monitoringSinceText = getI18n('about.monitoring.since');
-        warningTextEl.textContent = `${monitoringSinceText} ${startDate} (${exactTime})`;
-        warningEl.classList.remove('hidden');
-      } else {
-        warningEl.classList.add('hidden');
-      }
     }
 
     // Show content
@@ -705,31 +700,83 @@ const { apiKey, monitorId } = Astro.props;
     // Add hover effects to uptime bars
     document.addEventListener('mouseover', (e) => {
       const target = e.target as HTMLElement;
+      const wrapper = target.closest('.uptime-bar-wrapper') as HTMLElement;
       const bar = target.closest('.uptime-bar');
-      if (bar) {
-        const tooltip = bar.querySelector('.uptime-tooltip');
+      
+      if (wrapper && bar) {
+        const tooltip = bar.querySelector('.uptime-tooltip') as HTMLElement;
         if (tooltip) {
-          tooltip.classList.remove('opacity-0');
-          tooltip.classList.add('opacity-100');
+          tooltip.classList.remove('opacity-0', 'scale-95');
+          tooltip.classList.add('opacity-100', 'scale-100');
+          
+          // Style adjustments
+          (bar as HTMLElement).style.filter = 'brightness(1.2)';
+
+          // Calculate exact flex to match tooltip width + 4
+          const parent = wrapper.parentElement;
+          if (parent) {
+            // Stable base calculation regardless of current ongoing transitions
+            const numBars = parent.children.length;
+            const parentWidth = parent.offsetWidth;
+            const totalGapWidth = (numBars - 1) * 4; // gap-1 in tailwind is 4px
+            const baseWidth = (parentWidth - totalGapWidth) / numBars;
+            
+            const tooltipWidth = tooltip.offsetWidth || 35;
+            // Add 8 to targetWidth to guarantee a neat 4px margin on each visual side
+            const targetWidth = tooltipWidth + 8; 
+
+            // Reset any stuck transitions in the row just in case of rapid hovering
+            Array.from(parent.children).forEach(child => {
+              (child as HTMLElement).style.flex = '10';
+            });
+
+            if (targetWidth > baseWidth) {
+              const targetFlex = Math.min((targetWidth / baseWidth) * 10, 40); // Cap expansion
+              const extraFlex = targetFlex - 10;
+
+              const prev = wrapper.previousElementSibling as HTMLElement;
+              const next = wrapper.nextElementSibling as HTMLElement;
+
+              wrapper.style.flex = String(targetFlex);
+
+              if (prev && next) {
+                // Middle bar
+                prev.style.flex = String(Math.max(0.1, 10 - extraFlex / 2));
+                next.style.flex = String(Math.max(0.1, 10 - extraFlex / 2));
+              } else if (!prev && next) {
+                // First bar in row
+                next.style.flex = String(Math.max(0.1, 10 - extraFlex));
+              } else if (prev && !next) {
+                // Last bar in row
+                prev.style.flex = String(Math.max(0.1, 10 - extraFlex));
+              }
+            }
+          }
         }
-        // Scale effect
-        (bar as HTMLElement).style.transform = 'scaleX(1.05)';
-        (bar as HTMLElement).style.filter = 'brightness(1.2)';
       }
     });
 
     document.addEventListener('mouseout', (e) => {
       const target = e.target as HTMLElement;
+      const wrapper = target.closest('.uptime-bar-wrapper') as HTMLElement;
       const bar = target.closest('.uptime-bar');
-      if (bar) {
+      
+      if (wrapper && bar) {
         const tooltip = bar.querySelector('.uptime-tooltip');
         if (tooltip) {
-          tooltip.classList.add('opacity-0');
-          tooltip.classList.remove('opacity-100');
+          tooltip.classList.add('opacity-0', 'scale-95');
+          tooltip.classList.remove('opacity-100', 'scale-100');
         }
-        // Remove scale effect
-        (bar as HTMLElement).style.transform = '';
+        
+        // Remove style adjustments
         (bar as HTMLElement).style.filter = '';
+        
+        // Reset Flex
+        wrapper.style.flex = '10';
+        const prev = wrapper.previousElementSibling as HTMLElement;
+        const next = wrapper.nextElementSibling as HTMLElement;
+        if (prev) prev.style.flex = '10';
+        if (next) next.style.flex = '10';
       }
     });
   });
