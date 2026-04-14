@@ -1,5 +1,10 @@
 import type { APIRoute } from 'astro';
+import type { RowDataPacket } from 'mysql2';
 import { getDbPool } from '../../lib/db';
+
+interface CountRow extends RowDataPacket {
+  count: number;
+}
 
 // CACHÉ EN MEMORIA: Evitar conexiones de spam a MySQL
 // Como el número de jugadores online cambia rápido, el caché puede ser de solo 1 minuto
@@ -59,9 +64,9 @@ export const GET: APIRoute = async ({ request }) => {
       const pool = getDbPool();
 
       // Consultar MySQL
-      const [rows] = await pool.execute(
+      const [rows] = await pool.execute<CountRow[]>(
         'SELECT COUNT(DISTINCT lastAddress) as count FROM user_profiles'
-      ) as any;
+      );
 
       const count = rows[0].count;
 
