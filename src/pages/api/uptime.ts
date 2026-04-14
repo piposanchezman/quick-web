@@ -1,7 +1,9 @@
 import type { APIRoute } from 'astro';
 
-// CACHÉ EN MEMORIA RESTAURADO COMO MAP
-const cache = new Map<string, { data: any, timestamp: number }>();
+// CACHÉ EN MEMORIA ANTI-STAMPEDE (Guardamos la Promesa, no el valor)
+let uptimeCachePromise: Promise<any> | null = null;
+let lastUptimeCacheTime = 0;
+let fallbackUptimeData: any = null; // Guardar siempre el último resultado exitoso
 const CACHE_DURATION_MS = 5 * 60 * 1000; // 5 minutos guardados en RAM del servidor
 
 // VALIDACIÓN DE ORIGEN: Protege que otros sitios no consuman nuestra API
@@ -24,30 +26,31 @@ export const GET: APIRoute = async ({ request, url }) => {
     });
   }
 
-  // 2. Comprobar Caché, si es válido regresarlo AL INSTANTE
-  const cacheKey = 'uptime_data';
+  // 2. Comprobar Caché, si es válido regresarlo AL INSTANTE (Anti-Stampede)
   const now = Date.now();
-  const cached = cache.get(cacheKey);
 
-  if (cached && (now - cached.timestamp) < CACHE_DURATION_MS) {
-    return new Response(JSON.stringify(cached.data), {
-      status: 200,
-      headers: {
-        'Content-Type': 'application/json',
-        'Cache-Control': 'public, max-age=300', // Caché de navegador
-      },
-    });
+  if (uptimeCachePromise && (now - lastUptimeCacheTime) < CACHE_DURATION_MS) {
+    try {
+      const data = await uptimeCachePromise;
+      return new Response(JSON.stringify(data), {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'public, max-age=300', // Caché de navegador
+        },
+      });
+    } catch (e) {
+      uptimeCachePromise = null; // invalidar si falló
+    }
   }
 
-  try {
+  // Al expirar reescribimos la promesa
+  uptimeCachePromise = (async () => {
     const apiKey = import.meta.env.UPTIME_ROBOT_API_KEY;
     const monitorId = import.meta.env.UPTIME_ROBOT_MONITOR_ID;
 
     if (!apiKey || !monitorId) {
-      return new Response(
-        JSON.stringify({ error: 'Uptime Robot credentials not configured', fallback: true }),
-        { status: 200, headers: { 'Content-Type': 'application/json' } }
-      );
+      throw new Error('Uptime Robot credentials not configured');
     }
 
     // 3. TIMEOUT DE FETCH: Cancelar petición externa si se queda colgada (Protege la RAM)
@@ -75,14 +78,17 @@ export const GET: APIRoute = async ({ request, url }) => {
 
     if (data.stat === 'fail' && data.error) {
       console.warn('[API /api/uptime] Uptime Robot API error:', data.error);
-      return new Response(JSON.stringify({ error: 'Internal limit', fallback: true }), {
-        status: 429,
-        headers: { 'Content-Type': 'application/json', 'Retry-After': '300' },
-      });
+      throw new Error('Internal limit');
     }
 
-    // GUARDAR EN CACHÉ antes de enviar al usuario
-    cache.set(cacheKey, { data, timestamp: now });
+    return data;
+  })();
+
+  lastUptimeCacheTime = now;
+
+  try {
+    const data = await uptimeCachePromise;
+    fallbackUptimeData = data; // Respaldar datos
 
     return new Response(JSON.stringify(data), {
       status: 200,
@@ -91,16 +97,30 @@ export const GET: APIRoute = async ({ request, url }) => {
         'Cache-Control': 'public, max-age=300, stale-while-revalidate=60',
       },
     });
-  } catch (error) {
+  } catch (error: any) {
+    uptimeCachePromise = null;
     console.error('[API /api/uptime] Fetch Error:', error);
 
     // MEGA-FALLBACK: Si UptimeRobot está muerto hace horas, seguimos enviando 
     // la última caché viva que tuvo Node en lugar del aviso de error.
-    const fallbackCache = cache.get(cacheKey);
-    if (fallbackCache) {
-      return new Response(JSON.stringify(fallbackCache.data), {
+    if (fallbackUptimeData) {
+      return new Response(JSON.stringify(fallbackUptimeData), {
         status: 200,
         headers: { 'Content-Type': 'application/json' } 
+      });
+    }
+
+    if (error.message === 'Uptime Robot credentials not configured') {
+      return new Response(
+        JSON.stringify({ error: error.message, fallback: true }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    if (error.message === 'Internal limit') {
+      return new Response(JSON.stringify({ error: 'Internal limit', fallback: true }), {
+        status: 429,
+        headers: { 'Content-Type': 'application/json', 'Retry-After': '300' },
       });
     }
 
