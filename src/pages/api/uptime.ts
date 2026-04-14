@@ -1,7 +1,7 @@
 import type { APIRoute } from 'astro';
 
-// CACHÉ EN MEMORIA: Evita saturar la API de UptimeRobot y protege de bloqueos.
-let memoryCache: { data: any, timestamp: number } | null = null;
+// CACHÉ EN MEMORIA RESTAURADO COMO MAP
+const cache = new Map<string, { data: any, timestamp: number }>();
 const CACHE_DURATION_MS = 5 * 60 * 1000; // 5 minutos guardados en RAM del servidor
 
 // VALIDACIÓN DE ORIGEN: Protege que otros sitios no consuman nuestra API
@@ -25,9 +25,12 @@ export const GET: APIRoute = async ({ request, url }) => {
   }
 
   // 2. Comprobar Caché, si es válido regresarlo AL INSTANTE
+  const cacheKey = 'uptime_data';
   const now = Date.now();
-  if (memoryCache && (now - memoryCache.timestamp) < CACHE_DURATION_MS) {
-    return new Response(JSON.stringify(memoryCache.data), {
+  const cached = cache.get(cacheKey);
+
+  if (cached && (now - cached.timestamp) < CACHE_DURATION_MS) {
+    return new Response(JSON.stringify(cached.data), {
       status: 200,
       headers: {
         'Content-Type': 'application/json',
@@ -79,7 +82,7 @@ export const GET: APIRoute = async ({ request, url }) => {
     }
 
     // GUARDAR EN CACHÉ antes de enviar al usuario
-    memoryCache = { data, timestamp: now };
+    cache.set(cacheKey, { data, timestamp: now });
 
     return new Response(JSON.stringify(data), {
       status: 200,
@@ -93,8 +96,9 @@ export const GET: APIRoute = async ({ request, url }) => {
 
     // MEGA-FALLBACK: Si UptimeRobot está muerto hace horas, seguimos enviando 
     // la última caché viva que tuvo Node en lugar del aviso de error.
-    if (memoryCache) {
-      return new Response(JSON.stringify(memoryCache.data), {
+    const fallbackCache = cache.get(cacheKey);
+    if (fallbackCache) {
+      return new Response(JSON.stringify(fallbackCache.data), {
         status: 200,
         headers: { 'Content-Type': 'application/json' } 
       });

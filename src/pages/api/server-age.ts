@@ -1,9 +1,8 @@
 import type { APIRoute } from 'astro';
 
-// CACHÉ EN MEMORIA
-// Este es un cálculo estático de fechas así que el costo de CPU es 0. 
-// Pero aún así creamos restricción de origen para proteger el endpoint de SPAM masivo.
-let memoryCache: { data: any, timestamp: number } | null = null;
+// CACHÉ EN MEMORIA RESTAURADO COMO MAP
+// Esto permite extender a múltiples llaves si a futuro recibes parámetros estáticos
+const cache = new Map<string, { data: any, timestamp: number }>();
 const CACHE_DURATION_MS = 24 * 60 * 60 * 1000; // Refrescar 1 vez al día bastaría y sobra
 
 function isAllowedOrigin(request: Request) {
@@ -23,9 +22,12 @@ export const GET: APIRoute = async ({ request }) => {
     });
   }
 
+  const cacheKey = 'server-age';
   const now = Date.now();
-  if (memoryCache && (now - memoryCache.timestamp) < CACHE_DURATION_MS) {
-    return new Response(JSON.stringify(memoryCache.data), {
+  const cached = cache.get(cacheKey);
+
+  if (cached && (now - cached.timestamp) < CACHE_DURATION_MS) {
+    return new Response(JSON.stringify(cached.data), {
       status: 200,
       headers: {
         'Content-Type': 'application/json',
@@ -55,7 +57,7 @@ export const GET: APIRoute = async ({ request }) => {
       source: 'configured',
     };
 
-    memoryCache = { data, timestamp: now };
+    cache.set(cacheKey, { data, timestamp: now });
 
     return new Response(JSON.stringify(data), {
       status: 200,

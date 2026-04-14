@@ -6,9 +6,9 @@ interface CountRow extends RowDataPacket {
   count: number;
 }
 
-// CACHÉ EN MEMORIA: Evitar conexiones de spam a MySQL
+// CACHÉ EN MEMORIA RESTAURADO COMO MAP
 // Como el número de jugadores online cambia rápido, el caché puede ser de solo 1 minuto
-let memoryCache: { count: number, timestamp: number } | null = null;
+const cache = new Map<string, { count: number, timestamp: number }>();
 const CACHE_DURATION_MS = 60 * 1000; // 1 minuto (60,000 ms)
 
 // VALIDACIÓN DE ORIGEN:
@@ -35,11 +35,14 @@ export const GET: APIRoute = async ({ request }) => {
   }
 
   // 2. Caché Rápida desde RAM sin tener que interrogar MySQL
+  const cacheKey = 'users_count';
   const now = Date.now();
-  if (memoryCache && (now - memoryCache.timestamp) < CACHE_DURATION_MS) {
+  const cached = cache.get(cacheKey);
+
+  if (cached && (now - cached.timestamp) < CACHE_DURATION_MS) {
     return new Response(
       JSON.stringify({
-        count: memoryCache.count,
+        count: cached.count,
         source: 'cache',
       }),
       {
@@ -71,7 +74,7 @@ export const GET: APIRoute = async ({ request }) => {
       const count = rows[0].count;
 
       // 3. Guardar nuevo valor en la RAM (Memoria caché de Node.js)
-      memoryCache = { count, timestamp: now };
+      cache.set(cacheKey, { count, timestamp: now });
 
       return new Response(
         JSON.stringify({
@@ -96,10 +99,11 @@ export const GET: APIRoute = async ({ request }) => {
     console.error('[API /api/users] Error:', error);
 
     // 4. Fallback de emergencia, regresar valor cacheado previo si la BDD se cae
-    if (memoryCache) {
+    const fallbackCache = cache.get(cacheKey);
+    if (fallbackCache) {
        return new Response(
         JSON.stringify({
-          count: memoryCache.count,
+          count: fallbackCache.count,
           source: 'expired_cache_fallback',
         }),
         { status: 200, headers: { 'Content-Type': 'application/json' } }
