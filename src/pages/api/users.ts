@@ -6,9 +6,11 @@ interface CountRow extends RowDataPacket {
   count: number;
 }
 
-// CACHÉ EN MEMORIA RESTAURADO COMO MAP
+// CACHÉ EN MEMORIA ANTI-STAMPEDE (Guardamos la Promesa, no el valor)
 // Como el número de jugadores online cambia rápido, el caché puede ser de solo 1 minuto
-const cache = new Map<string, { count: number, timestamp: number }>();
+let usersCachePromise: Promise<{ count: number }> | null = null;
+let lastCacheTime = 0;
+let fallbackCount: number | null = null; // Guardar siempre el último recuento exitoso
 const CACHE_DURATION_MS = 60 * 1000; // 1 minuto (60,000 ms)
 
 // VALIDACIÓN DE ORIGEN:
@@ -34,29 +36,35 @@ export const GET: APIRoute = async ({ request }) => {
     });
   }
 
-  // 2. Caché Rápida desde RAM sin tener que interrogar MySQL
-  const cacheKey = 'users_count';
+  // 2. Caché con Promesa (Anti-Stampede)
   const now = Date.now();
-  const cached = cache.get(cacheKey);
 
-  if (cached && (now - cached.timestamp) < CACHE_DURATION_MS) {
-    return new Response(
-      JSON.stringify({
-        count: cached.count,
-        source: 'cache',
-      }),
-      {
-        status: 200,
-        headers: {
-          'Content-Type': 'application/json',
-          // También indicamos al navegador que puede cachear
-          'Cache-Control': 'public, max-age=60',
-        },
-      }
-    );
+  if (usersCachePromise && (now - lastCacheTime) < CACHE_DURATION_MS) {
+    try {
+      const data = await usersCachePromise;
+      return new Response(
+        JSON.stringify({
+          count: data.count,
+          source: 'cache',
+        }),
+        {
+          status: 200,
+          headers: {
+            'Content-Type': 'application/json',
+            // También indicamos al navegador que puede cachear
+            'Cache-Control': 'public, max-age=60',
+          },
+        }
+      );
+    } catch (e) {
+      // Si la promesa falló, la descartamos y seguimos al bloque de fetch nuevo.
+      usersCachePromise = null;
+    }
   }
 
-  try {
+  // Al expirar (o no existir, o fallar), reescribimos inmediatamente la promesa
+  // de manera sincrónica para que las peticiones concurrentes se enganchen a ella
+  usersCachePromise = (async () => {
     const dbHost = import.meta.env.JPREMIUM_DB_HOST;
     const dbPort = import.meta.env.JPREMIUM_DB_PORT;
     const dbName = import.meta.env.JPREMIUM_DB_NAME;
@@ -71,39 +79,39 @@ export const GET: APIRoute = async ({ request }) => {
         'SELECT COUNT(DISTINCT lastAddress) as count FROM user_profiles'
       );
 
-      const count = rows[0].count;
-
-      // 3. Guardar nuevo valor en la RAM (Memoria caché de Node.js)
-      cache.set(cacheKey, { count, timestamp: now });
-
-      return new Response(
-        JSON.stringify({
-          count: count,
-          source: 'database',
-        }),
-        {
-          status: 200,
-          headers: {
-            'Content-Type': 'application/json',
-            'Cache-Control': 'public, max-age=60',
-          },
-        }
-      );
+      return { count: rows[0].count };
     }
 
+    throw new Error('Database not configured');
+  })();
+
+  lastCacheTime = now;
+
+  try {
+    const data = await usersCachePromise;
+    fallbackCount = data.count; // Respaldar para el fallback de emergencia
     return new Response(
-      JSON.stringify({ error: 'Database not configured' }),
-      { status: 503, headers: { 'Content-Type': 'application/json' } }
+      JSON.stringify({
+        count: data.count,
+        source: 'database',
+      }),
+      {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'public, max-age=60',
+        },
+      }
     );
   } catch (error) {
+    usersCachePromise = null; // Limpiar para que la próxima intente de nuevo
     console.error('[API /api/users] Error:', error);
 
     // 4. Fallback de emergencia, regresar valor cacheado previo si la BDD se cae
-    const fallbackCache = cache.get(cacheKey);
-    if (fallbackCache) {
-       return new Response(
+    if (fallbackCount !== null) {
+      return new Response(
         JSON.stringify({
-          count: fallbackCache.count,
+          count: fallbackCount,
           source: 'expired_cache_fallback',
         }),
         { status: 200, headers: { 'Content-Type': 'application/json' } }
@@ -111,7 +119,7 @@ export const GET: APIRoute = async ({ request }) => {
     }
 
     return new Response(
-      JSON.stringify({ error: 'Internal failure' }),
+      JSON.stringify({ error: 'Internal failure or database not configured' }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }
     );
   }
