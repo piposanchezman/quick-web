@@ -1,5 +1,6 @@
 ---
 import GlobalBackground from "../components/layout/GlobalBackground.astro";
+import StoreButton from "../components/ui/StoreButton.astro";
 import { SITE_CONFIG } from "../constants";
 import type { Locale } from "../i18n/utils";
 import { translations } from "../i18n/translations";
@@ -93,6 +94,9 @@ const htmlLang = locale === 'pt' ? 'pt-BR' : locale;
         <div class="relative z-10">
             <slot />
         </div>
+
+        <!-- Store Button -->
+        <StoreButton />
 
         <!-- Global Toast Notification -->
         <div
