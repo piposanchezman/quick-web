@@ -65,24 +65,14 @@ export const GET: APIRoute = async ({ request }) => {
   // Al expirar (o no existir, o fallar), reescribimos inmediatamente la promesa
   // de manera sincrónica para que las peticiones concurrentes se enganchen a ella
   usersCachePromise = (async () => {
-    const dbHost = import.meta.env.JPREMIUM_DB_HOST;
-    const dbPort = import.meta.env.JPREMIUM_DB_PORT;
-    const dbName = import.meta.env.JPREMIUM_DB_NAME;
-    const dbUser = import.meta.env.JPREMIUM_DB_USER;
-    const dbPass = import.meta.env.JPREMIUM_DB_PASS;
+    const pool = getDbPool();
 
-    if (dbHost && dbName && dbUser && dbPass) {
-      const pool = getDbPool();
+    // Consultar MySQL
+    const [rows] = await pool.execute<CountRow[]>(
+      'SELECT COUNT(DISTINCT lastAddress) as count FROM user_profiles'
+    );
 
-      // Consultar MySQL
-      const [rows] = await pool.execute<CountRow[]>(
-        'SELECT COUNT(DISTINCT lastAddress) as count FROM user_profiles'
-      );
-
-      return { count: rows[0].count };
-    }
-
-    throw new Error('Database not configured');
+    return { count: rows[0].count };
   })();
 
   lastCacheTime = now;
