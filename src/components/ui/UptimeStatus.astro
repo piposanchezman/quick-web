@@ -412,12 +412,14 @@ const { apiKey, monitorId } = Astro.props;
           const noDataText = getI18n('about.monitoring.noData');
           
           html += `
-            <div class="flex flex-col items-center justify-end gap-1 uptime-bar-wrapper" style="flex: 10; height: 100%; min-width: 0; transition: flex 0.2s ease-out;">
-              <div 
-                class="w-full rounded-t flex items-center justify-center relative"
-                style="background-color: #333; height: 10%; opacity: 0.3;"
-                title="${noDataText}"
-              >
+            <div class="flex flex-col items-center justify-end gap-1 uptime-bar-wrapper" style="flex: 1; height: 100%; min-width: 0; transition: flex 0.2s ease-out;">
+              <div class="w-full flex-grow flex items-end">
+                <div 
+                  class="w-full rounded-t flex items-center justify-center relative"
+                  style="background-color: #333; height: 10%; opacity: 0.3;"
+                  title="${noDataText}"
+                >
+                </div>
               </div>
               <div class="text-[8px] text-gray-600 font-semibold text-center leading-tight whitespace-nowrap overflow-hidden text-ellipsis w-full">
                 ${label}
@@ -438,15 +440,17 @@ const { apiKey, monitorId } = Astro.props;
           const formattedUptime = parseFloat(uptime.toFixed(2)).toString() + "%";
 
           html += `
-            <div class="flex flex-col items-center justify-end gap-1 uptime-bar-wrapper" style="flex: 10; height: 100%; min-width: 0; transition: flex 0.2s ease-out;">
-              <div 
-                class="w-full rounded-t flex items-center justify-center relative transition-all duration-200 cursor-pointer uptime-bar hover:brightness-125"
-                style="${bgStyle} height: ${height}%; opacity: ${opacity};"
-                data-uptime="${uptime.toFixed(2)}"
-              >
-                <div class="uptime-tooltip absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-0 transition-all duration-200 pointer-events-none z-50 flex flex-col items-center scale-95">
-                  <div class="bg-[#1a1a1a]/90 backdrop-blur-sm border border-white/10 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-sm shadow-xl whitespace-nowrap">
-                    ${formattedUptime}
+            <div class="flex flex-col items-center justify-end gap-1 uptime-bar-wrapper" style="flex: 1; height: 100%; min-width: 0; transition: flex 0.2s ease-out;">
+              <div class="w-full flex-grow flex items-end">
+                <div 
+                  class="w-full rounded-t flex items-center justify-center relative transition-all duration-200 cursor-pointer uptime-bar hover:brightness-125"
+                  style="${bgStyle} height: ${height}%; opacity: ${opacity};"
+                  data-uptime="${uptime.toFixed(2)}"
+                >
+                  <div class="uptime-tooltip absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-0 transition-all duration-200 pointer-events-none z-50 flex flex-col items-center scale-95">
+                    <div class="bg-[#1a1a1a]/90 backdrop-blur-sm border border-white/10 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-sm shadow-xl whitespace-nowrap">
+                      ${formattedUptime}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -727,29 +731,16 @@ const { apiKey, monitorId } = Astro.props;
 
             // Reset any stuck transitions in the row just in case of rapid hovering
             Array.from(parent.children).forEach(child => {
-              (child as HTMLElement).style.flex = '10';
+              (child as HTMLElement).style.flex = '1';
             });
 
             if (targetWidth > baseWidth) {
-              const targetFlex = Math.min((targetWidth / baseWidth) * 10, 40); // Cap expansion
-              const extraFlex = targetFlex - 10;
-
-              const prev = wrapper.previousElementSibling as HTMLElement;
-              const next = wrapper.nextElementSibling as HTMLElement;
-
+              // Set the hovered bar's flex dynamically to make room for tooltip
+              // Leaving all siblings at '1' ensures the row shares the reduction evenly
+              const targetRatio = targetWidth / baseWidth;
+              // A proportional scaling factor, capped so it never shrinks the whole row excessively
+              const targetFlex = Math.min(targetRatio * 1.2, 5); 
               wrapper.style.flex = String(targetFlex);
-
-              if (prev && next) {
-                // Middle bar
-                prev.style.flex = String(Math.max(0.1, 10 - extraFlex / 2));
-                next.style.flex = String(Math.max(0.1, 10 - extraFlex / 2));
-              } else if (!prev && next) {
-                // First bar in row
-                next.style.flex = String(Math.max(0.1, 10 - extraFlex));
-              } else if (prev && !next) {
-                // Last bar in row
-                prev.style.flex = String(Math.max(0.1, 10 - extraFlex));
-              }
             }
           }
         }
@@ -771,12 +762,13 @@ const { apiKey, monitorId } = Astro.props;
         // Remove style adjustments
         (bar as HTMLElement).style.filter = '';
         
-        // Reset Flex
-        wrapper.style.flex = '10';
-        const prev = wrapper.previousElementSibling as HTMLElement;
-        const next = wrapper.nextElementSibling as HTMLElement;
-        if (prev) prev.style.flex = '10';
-        if (next) next.style.flex = '10';
+        // Reset Flex for the whole row
+        const parent = wrapper.parentElement;
+        if (parent) {
+          Array.from(parent.children).forEach(child => {
+            (child as HTMLElement).style.flex = '1';
+          });
+        }
       }
     });
   });
